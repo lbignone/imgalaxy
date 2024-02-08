@@ -2,6 +2,8 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+from imgalaxy.cfg import GALAXY_ZOO_DIR
+
 
 def resize(input_image, input_mask, size):
     input_image = tf.image.resize(input_image, (size, size), method="nearest")
@@ -37,6 +39,10 @@ def binary_mask(input_mask, threshold):
 
 if __name__ == '__main__':
     x = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    print(x.shape)
     ds, info = tfds.load(
-        'galaxy_zoo3d', split=['train[:75%]', 'train[75%:]'], with_info=True
+        'galaxy_zoo3d',
+        data_dir=GALAXY_ZOO_DIR,
+        split=['train[:75%]', 'train[75%:]'],
+        with_info=True,
     )

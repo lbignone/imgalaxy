@@ -11,7 +11,10 @@ services:
       - ${JUPYTER_PORT}
     command: bash -c "poetry run python imgalaxy/transform.py && tail -f /dev/null"
     volumes:
-      - ${GALAXY_ZOO_DIR}:/imgalaxy/imgalaxy/resources/data/galaxy-zoo
+      - ${GALAXY_ZOO_DIR}:/imgalaxy/data/galaxy-zoo
+      - type: bind
+        source: ./imgalaxy
+        target: /imgalaxy/imgalaxy
       - type: bind
         source: ./.env
         target: /imgalaxy/.env
