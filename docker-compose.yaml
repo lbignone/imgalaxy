@@ -1,0 +1,26 @@
+version: '3'
+services:
+
+  # ETL
+  imgalaxy:
+    build: .
+    container_name: imgalaxy
+    ports:
+      - ${JUPYTER_PORT}:${JUPYTER_PORT}
+    expose:
+      - ${JUPYTER_PORT}
+    command: bash -c "poetry run python imgalaxy/transform.py && tail -f /dev/null"
+    volumes:
+      - ${GALAXY_ZOO_DIR}:/imgalaxy/imgalaxy/resources/data/galaxy-zoo
+      - type: bind
+        source: ./.env
+        target: /imgalaxy/.env
+    working_dir: /imgalaxy/
+
+    networks:
+      - imgalaxy-network
+
+# NETWORKS
+networks:
+  imgalaxy-network:
+    driver: bridge

@@ -1,0 +1,7 @@
+DEBUG:blib2to3.pgen2.driver:NAME 'import' (prefix='')
+DEBUG:blib2to3.pgen2.driver:NAME 'tensorflow' (prefix=' ')
+DEBUG:blib2to3.pgen2.driver:NAME 'as' (prefix=' ')
+DEBUG:blib2to3.pgen2.driver:NAME 'tf' (prefix=' ')
+DEBUG:blib2to3.pgen2.driver:NEWLINE '\n' (prefix='')
+DEBUG:blib2to3.pgen2.driver:ENDMARKER '' (prefix='')
+DEBUG:blib2to3.pgen2.driver:Stop.

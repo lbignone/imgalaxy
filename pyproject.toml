@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "imgalaxy"
+version = "0.1.0"
+description = ""
+authors = ["Jose Castagnino"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.4"
+# tensorflow = { version = "^2.14", extras = ["cuda"] }
+tensorflow = "2.14"
+scikit-learn = "^1.4.0"
+tensorflow-datasets = "^4.9.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
