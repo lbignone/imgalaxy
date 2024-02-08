@@ -37,7 +37,6 @@ def binary_mask(input_mask, threshold):
 
 if __name__ == '__main__':
     x = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-    breakpoint()
     ds, info = tfds.load(
         'galaxy_zoo3d', split=['train[:75%]', 'train[75%:]'], with_info=True
     )
