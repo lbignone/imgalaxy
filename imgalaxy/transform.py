@@ -1,5 +1,6 @@
 """Transformation methods."""
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 
 def resize(input_image, input_mask, size):
@@ -27,11 +28,16 @@ def normalize(input_image):
 
 
 def binary_mask(input_mask, threshold):
-    input_mask = tf.where(input_mask<threshold, tf.zeros_like(input_mask), tf.ones_like(input_mask))
+    input_mask = tf.where(
+        input_mask < threshold, tf.zeros_like(input_mask), tf.ones_like(input_mask)
+    )
 
     return input_mask
 
 
 if __name__ == '__main__':
-    x = tf.constant([[1., 2., 3.], [4., 5., 6.]])
+    x = tf.constant([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
     breakpoint()
+    ds, info = tfds.load(
+        'galaxy_zoo3d', split=['train[:75%]', 'train[75%:]'], with_info=True
+    )

@@ -13,6 +13,39 @@ scikit-learn = "^1.4.0"
 tensorflow-datasets = "^4.9.4"
 
 
+[tool.poetry.group.dev.dependencies]
+pdbpp = "^0.10.3"
+black = "^24.1.1"
+pylint = "^3.0.3"
+
+[tool.black]
+line_length = 88
+skip-string-normalization = true
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = 'skip'
+
+[tool.isort]
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+
+[tool.pylint.master]
+jobs = 0
+ 
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+  'C',
+  'R',
+  'fixme',
+  'logging-format-interpolation',
+  'logging-fstring-interpolation',
+  'unspecified-encoding'
+]
+
+[tool.pylint.'FORMAT']
+max-line-length = 88  # as in black
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
