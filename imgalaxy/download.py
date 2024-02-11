@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.request import urlretrieve
 
 import click
+import requests
 
 from imgalaxy.cfg import BASE_URL, CHECKSUMS_FILENAME, DEFAULT_PATH, MANGA_SHA1SUM
 
@@ -11,7 +12,7 @@ logging.basicConfig(level='INFO')
 logger = logging.getLogger(f"imgalaxy.{__file__}")
 
 
-def get_files_and_sha1sum(filepath: str = DEFAULT_PATH):
+def get_files_and_sha1sum(filepath: Path = DEFAULT_PATH) -> Path:
     """Retrieve images' names and checksums and save them at `filepath`.
 
     Parameters
@@ -25,17 +26,16 @@ def get_files_and_sha1sum(filepath: str = DEFAULT_PATH):
         Location of the downloaded file.
 
     """
-    path = Path(filepath)
-    if path.is_dir():
-        logger.info(f"Downloading checksums file to {path}.")
-    else:
-        logger.error(f"Location {filepath} not found. Creating it..")
-        Path(path).mkdir(parents=True, exist_ok=True)
-    urlretrieve(BASE_URL + MANGA_SHA1SUM, Path(filepath) / CHECKSUMS_FILENAME)
-    return path / CHECKSUMS_FILENAME
+    path = filepath / CHECKSUMS_FILENAME
+    logger.info("Downloading image names and sha1 checksums...")
+    response = requests.get(BASE_URL + MANGA_SHA1SUM, timeout=180)
+    with open(path, mode='wb') as f:
+        f.write(response.content)
+    logging.info(f"Checksums file saved in {path}.")
+    return path
 
 
-def verify_checksum(filepath, sha1_hash):
+def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
     """Verifiy that the image from `filepath` has the correct sha1 hash.
 
     Parameters
@@ -72,6 +72,7 @@ def main(path, start):
             image_sha = str(image).split(' ')[0]
             image_filepath = path / image_filename
             urlretrieve(BASE_URL + image_filename, image_filepath)
+            breakpoint()
             if not verify_checksum(image_filepath, image_sha):
                 failed_checksums[image_filename] = image_sha
 
