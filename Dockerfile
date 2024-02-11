@@ -15,7 +15,7 @@ ENV PATH="${PATH}:/root/.poetry/bin"
 COPY pyproject.toml /imgalaxy/pyproject.toml
 COPY poetry.lock /imgalaxy/poetry.lock
 WORKDIR /imgalaxy
-RUN poetry config virtualenvs.create false
-RUN poetry install -vvv --no-root
 COPY . /imgalaxy/
+RUN poetry config virtualenvs.create false
+# RUN poetry install -vvv --no-root
 RUN poetry install --no-interaction
