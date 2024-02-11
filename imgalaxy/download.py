@@ -1,12 +1,17 @@
 import logging
 from hashlib import sha1
 from pathlib import Path
-from urllib.request import urlretrieve
 
 import click
 import requests
 
-from imgalaxy.cfg import BASE_URL, CHECKSUMS_FILENAME, DATA_DIR, DEFAULT_PATH, MANGA_SHA1SUM
+from imgalaxy.cfg import (
+    BASE_URL,
+    CHECKSUMS_FILENAME,
+    DATA_DIR,
+    DEFAULT_PATH,
+    MANGA_SHA1SUM,
+)
 
 logging.basicConfig(level='INFO')
 logger = logging.getLogger(f"imgalaxy.{__file__}")
@@ -28,7 +33,7 @@ def get_files_and_sha1sum(filepath: Path = DEFAULT_PATH) -> Path:
     """
     path = filepath / CHECKSUMS_FILENAME
     logger.info("Downloading image names and sha1 checksums...")
-    response = requests.get(BASE_URL + MANGA_SHA1SUM, timeout=180)
+    response = requests.get(BASE_URL + MANGA_SHA1SUM, timeout=360)
     with open(path, mode='wb') as f:
         f.write(response.content)
     logging.info(f"Checksums file saved in {path}.")
@@ -69,7 +74,7 @@ def main(path, start):
     with click.progressbar(sha1sums, empty_char='☆', fill_char='★', width=87) as bar:
         for image in bar:
             image_filename = str(image).split(' ')[2].strip()
-            response = requests.get(BASE_URL + image_filename, timeout=90)
+            response = requests.get(BASE_URL + image_filename, timeout=180)
             image_filepath = DATA_DIR / image_filename
             with open(image_filepath, 'wb') as f:
                 f.write(response.content)
