@@ -1,7 +1,5 @@
 """Galaxy Zoo 3D Dataset."""
-# import tensorflow as tf
 import tensorflow_datasets as tfds
-from astropy.io import fits
 
 from imgalaxy.cfg import DATA_DIR
 
@@ -36,9 +34,8 @@ class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Download the data and define splits."""
-        datasets_path = DATA_DIR / 'dataset'  # pylint: disable=unused-variable # noqa
 
-        data_path = dl_manager.datasets_path
+        data_path = dl_manager.DATA_DIR
         paths = {"images_path": data_path}
 
         return {"train": self._generate_examples(paths)}
@@ -46,12 +43,11 @@ class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
     def _generate_examples(self, path):
         """Generator of examples for each split."""
         for img_path in path.glob('*.gz'):
-            with fits.open(img_path) as hdul:
-                # pylint: disable=no-member
-                yield img_path.name, {
-                    'image': hdul[0].data.copy(),
-                    'mask_center': hdul[1].data.copy(),
-                    'mask_stars': hdul[2].data.copy(),
-                    'mask_spiral': hdul[3].data.copy(),
-                    'mask_bar': hdul[4].data.copy(),
-                }
+            img_name = img_path.with_suffix("").with_suffix("")
+            yield img_path.name, {
+                'image': DATA_DIR / f"{img_name}_image.npy",
+                'mask_center': DATA_DIR / f"{img_name}_mask_center.npy",
+                'mask_stars': DATA_DIR / f"{img_name}_mask_stars.npy",
+                'mask_spiral': DATA_DIR / f"{img_name}_mask_spiral.npy",
+                'mask_bar': DATA_DIR / f"{img_name}_mask_bar.npy",
+            }

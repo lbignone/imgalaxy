@@ -23,6 +23,7 @@ def get_galaxies_metadata() -> Path:
     """Get filenames and their checksums for the galaxies. Takes no arguments.
 
     Returns
+    -------
     path : pathlib.Path
         Location where the metadata was saved.
 
@@ -54,20 +55,20 @@ def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
     return image_hash == sha1_hash
 
 
-def save_galaxy_npy(galaxy_filepath: Path) -> None:
+def save_galaxy_npy(filepath: Path) -> None:
     """Save numpy representation of a galaxy's RGB image and its masks.
 
     Parameters
     ----------
-    galaxy_filepath : pathlib.Path
+    filepath : pathlib.Path
         Full path for the galaxy's file (.fits compatible format)
 
     Returns no value.
 
     """
-    location = galaxy_filepath.parent
-    name = galaxy_filepath.with_suffix('').stem  # remove .fits & .gz from filename
-    with fits.open(galaxy_filepath) as hdul:
+    location = filepath.parent
+    name = filepath.with_suffix('').with_suffix('')  # rm .fits & .gz from filename
+    with fits.open(filepath) as hdul:
         # pylint: disable=no-member
         np.save(location / f"{name}_image.npy", hdul[0].data)
         np.save(location / f"{name}_mask_center.npy", hdul[1].data)
@@ -93,16 +94,15 @@ def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) 
     """
     galaxy_filename = str(galaxy).split(' ')[2].strip()
     response = requests.get(BASE_URL + galaxy_filename, timeout=180)
-    galaxy_filepath = DATA_DIR / galaxy_filename
-    with open(galaxy_filepath, 'wb') as f:
+    filepath = DATA_DIR / galaxy_filename
+    with open(filepath, 'wb') as f:
         f.write(response.content)
-
-    if save_npy:
-        save_galaxy_npy(galaxy_filepath)
+        if save_npy:
+            save_galaxy_npy(filepath)
 
     if checksum:
         image_sha = str(galaxy).split(' ')[0]
-        if not verify_checksum(galaxy_filepath, image_sha):
+        if not verify_checksum(filepath, image_sha):
             raise ValueError(f"Wrong sha1 values for galaxy {galaxy}.")
 
 
