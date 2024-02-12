@@ -11,30 +11,23 @@ from imgalaxy.cfg import (
     BASE_URL,
     CHECKSUMS_FILENAME,
     DATA_DIR,
-    DEFAULT_PATH,
     MANGA_SHA1SUM,
+    RESOURCES_DIR,
 )
 
 logging.basicConfig(level='INFO')
 logger = logging.getLogger(f"imgalaxy.{__file__}")
 
 
-def get_files_and_sha1sum(filepath: Path = DEFAULT_PATH) -> Path:
-    """Retrieve images' names and checksums and save them at `filepath`.
-
-    Parameters
-    ----------
-    filepath : str, default=`DEFAULT_PATH@cfg.py`.
-        Location to save the checksums file.
+def get_galaxies_metadata() -> Path:
+    """Get filenames and their checksums for the galaxies. Takes no arguments.
 
     Returns
-    -------
-    pathlib.Path
-        Location of the downloaded file.
+    path : pathlib.Path
+        Location where the metadata was saved.
 
     """
-    path = filepath / CHECKSUMS_FILENAME
-    logger.info("Downloading image names and sha1 checksums...")
+    path = RESOURCES_DIR / CHECKSUMS_FILENAME
     response = requests.get(BASE_URL + MANGA_SHA1SUM, timeout=360)
     with open(path, mode='wb') as f:
         f.write(response.content)
@@ -61,27 +54,26 @@ def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
     return image_hash == sha1_hash
 
 
-def save_galaxy_npy(galaxy: str, location: Path = DATA_DIR) -> None:
+def save_galaxy_npy(galaxy_filepath: Path) -> None:
     """Save numpy representation of a galaxy's RGB image and its masks.
 
     Parameters
     ----------
-    galaxy : str
-        Galaxy's filename.
-    location : pathlib.Path, default=`DATA_DIR@cfg.py`
-        Location to save binaries.
+    galaxy_filepath : pathlib.Path
+        Full path for the galaxy's file (.fits compatible format)
 
     Returns no value.
 
     """
-    with fits.open(location / galaxy) as hdul:
+    location = galaxy_filepath.parent
+    name = galaxy_filepath.with_suffix('').stem  # remove .fits & .gz from filename
+    with fits.open(galaxy_filepath) as hdul:
         # pylint: disable=no-member
-        galaxy_name = galaxy.replace(".fits.gz", "")
-        np.save(location / f"{galaxy_name}_image", hdul[0].data)
-        np.save(location / f"{galaxy_name}_center_mask", hdul[1].data)
-        np.save(location / f"{galaxy_name}_stars_mask", hdul[2].data)
-        np.save(location / f"{galaxy_name}_spiral_mask", hdul[3].data)
-        np.save(location / f"{galaxy_name}_bar_mask", hdul[4].data)
+        np.save(location / f"{name}_image.npy", hdul[0].data)
+        np.save(location / f"{name}_mask_center.npy", hdul[1].data)
+        np.save(location / f"{name}_mask_stars.npy", hdul[2].data)
+        np.save(location / f"{name}_mask_spiral.npy", hdul[3].data)
+        np.save(location / f"{name}_mask_bar.npy", hdul[4].data)
 
 
 def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) -> None:
@@ -115,27 +107,26 @@ def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) 
 
 
 @click.command()
-@click.option(
-    "--path", "-p", required=False, default=DEFAULT_PATH, help="Location to save data."
-)
-@click.option(
-    "--start", "-s", required=False, default=0, help="Starting point of download."
-)
-@click.option(
-    "--verify-checksums", required=False, default=True, help="Disable hash checksums."
-)
+@click.option("--start", "-s", default=0, help="Starting point of download.")
+@click.option("--verify_checksums", default=True, help="Disable hash checksums.")
 @click.option(
     "--save-npy",
-    required=False,
-    default=True,
-    help="Save copies of the images as numpy arrays.",
+    default=False,
+    is_flag=True,
+    help="Save copies of the images as .npy (numpy arrays).",
 )
-def download_pipeline(path, start, verify_checksums, save_npy):
-    path = Path(path)
-    sha1sums_filepath = get_files_and_sha1sum(path)
-    sha1sums = open(sha1sums_filepath, 'r').readlines()[start:]
+def download_pipeline(start, verify_checksums, save_npy):
+    logger.info("Downloading image names and sha1 checksums...")
+    metadata_filepath = get_galaxies_metadata()
+    galaxies_metadata = open(metadata_filepath, 'r').readlines()[start:]
+    logger.info("Downloading Galaxy Zoo 3D dataset. This may take several hours...")
     with click.progressbar(
-        sha1sums, empty_char='☆', fill_char='★', width=87, length=len(sha1sums)
+        galaxies_metadata,
+        empty_char="☆",
+        fill_char="★",
+        width=0,
+        length=len(galaxies_metadata),
+        show_pos=True,
     ) as count:
         for galaxy in count:
             download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)

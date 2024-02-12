@@ -3,7 +3,7 @@
 import tensorflow_datasets as tfds
 from astropy.io import fits
 
-from imgalaxy.cfg import DEFAULT_PATH
+from imgalaxy.cfg import DATA_DIR
 
 IMAGES = [
     "gz3d_1-641253_37_14744505",
@@ -26,19 +26,17 @@ class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
             features=tfds.features.FeaturesDict(
                 {
                     'image': tfds.features.Image(shape=(525, 525, 3)),
-                    'spiral_mask': tfds.features.Image(shape=(525, 525, 1)),
-                    'bar_mask': tfds.features.Image(shape=(525, 525, 1)),
-                    'center_mask': tfds.features.Image(shape=(525, 525, 1)),
-                    'stars_mask': tfds.features.Image(shape=(525, 525, 1)),
+                    'mask_spiral': tfds.features.Image(shape=(525, 525, 1)),
+                    'mask_bar': tfds.features.Image(shape=(525, 525, 1)),
+                    'mask_center': tfds.features.Image(shape=(525, 525, 1)),
+                    'mask_stars': tfds.features.Image(shape=(525, 525, 1)),
                 }
             ),
         )
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Download the data and define splits."""
-        datasets_path = (  # pylint: disable=unused-variable # noqa
-            DEFAULT_PATH / 'datasets'
-        )
+        datasets_path = DATA_DIR / 'dataset'  # pylint: disable=unused-variable # noqa
 
         data_path = dl_manager.datasets_path
         paths = {"images_path": data_path}
@@ -52,8 +50,8 @@ class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
                 # pylint: disable=no-member
                 yield img_path.name, {
                     'image': hdul[0].data.copy(),
-                    'center_mask': hdul[1].data.copy(),
-                    'stars_mask': hdul[2].data.copy(),
-                    'spiral_mask': hdul[3].data.copy(),
-                    'bar_mask': hdul[4].data.copy(),
+                    'mask_center': hdul[1].data.copy(),
+                    'mask_stars': hdul[2].data.copy(),
+                    'mask_spiral': hdul[3].data.copy(),
+                    'mask_bar': hdul[4].data.copy(),
                 }

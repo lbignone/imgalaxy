@@ -1,3 +1,8 @@
 .env
 /imgalaxy/download-logs.log
+/imgalaxy/resources/checksums.sha1sum
+/imgalaxy/resources/logs/
+/imgalaxy/resources/datasets/
+/imgalaxy/resources/checksums.sha1sum
+
 /notebooks
