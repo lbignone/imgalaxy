@@ -3,7 +3,9 @@ from hashlib import sha1
 from pathlib import Path
 
 import click
+import numpy as np
 import requests
+from astropy.io import fits
 
 from imgalaxy.cfg import (
     BASE_URL,
@@ -27,7 +29,7 @@ def get_files_and_sha1sum(filepath: Path = DEFAULT_PATH) -> Path:
 
     Returns
     -------
-    str
+    pathlib.Path
         Location of the downloaded file.
 
     """
@@ -59,6 +61,59 @@ def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
     return image_hash == sha1_hash
 
 
+def save_galaxy_npy(galaxy: str, location: Path = DATA_DIR) -> None:
+    """Save numpy representation of a galaxy's RGB image and its masks.
+
+    Parameters
+    ----------
+    galaxy : str
+        Galaxy's filename.
+    location : pathlib.Path, default=`DATA_DIR@cfg.py`
+        Location to save binaries.
+
+    Returns no value.
+
+    """
+    with fits.open(location / galaxy) as hdul:
+        # pylint: disable=no-member
+        galaxy_name = galaxy.replace(".fits.gz", "")
+        np.save(location / f"{galaxy_name}_image", hdul[0].data)
+        np.save(location / f"{galaxy_name}_center_mask", hdul[1].data)
+        np.save(location / f"{galaxy_name}_stars_mask", hdul[2].data)
+        np.save(location / f"{galaxy_name}_spiral_mask", hdul[3].data)
+        np.save(location / f"{galaxy_name}_bar_mask", hdul[4].data)
+
+
+def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) -> None:
+    """Download a single galaxy's image and masks from its filename.
+
+    Parameters
+    ----------
+    galaxy : str
+        Filename of the galaxy.
+    checksum : bool, default=True
+        Verify sha1sum values for the file.
+    save_numpy : bool, default=False
+        Save numpy representation of the galaxy's images using `save_galaxy_npy`.
+
+    Returns no value.
+
+    """
+    galaxy_filename = str(galaxy).split(' ')[2].strip()
+    response = requests.get(BASE_URL + galaxy_filename, timeout=180)
+    galaxy_filepath = DATA_DIR / galaxy_filename
+    with open(galaxy_filepath, 'wb') as f:
+        f.write(response.content)
+
+    if save_npy:
+        save_galaxy_npy(galaxy_filepath)
+
+    if checksum:
+        image_sha = str(galaxy).split(' ')[0]
+        if not verify_checksum(galaxy_filepath, image_sha):
+            raise ValueError(f"Wrong sha1 values for galaxy {galaxy}.")
+
+
 @click.command()
 @click.option(
     "--path", "-p", required=False, default=DEFAULT_PATH, help="Location to save data."
@@ -66,23 +121,23 @@ def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
 @click.option(
     "--start", "-s", required=False, default=0, help="Starting point of download."
 )
-def main(path, start):
+@click.option(
+    "--verify-checksums", required=False, default=True, help="Disable hash checksums."
+)
+@click.option(
+    "--save-npy",
+    required=False,
+    default=True,
+    help="Save copies of the images as numpy arrays.",
+)
+def download_pipeline(path, start, verify_checksums, save_npy):
     path = Path(path)
     sha1sums_filepath = get_files_and_sha1sum(path)
     sha1sums = open(sha1sums_filepath, 'r').readlines()[start:]
-    failed_checksums: dict = {}
-    with click.progressbar(sha1sums, empty_char='☆', fill_char='★', width=87) as bar:
-        for image in bar:
-            image_filename = str(image).split(' ')[2].strip()
-            response = requests.get(BASE_URL + image_filename, timeout=180)
-            image_filepath = DATA_DIR / image_filename
-            with open(image_filepath, 'wb') as f:
-                f.write(response.content)
-
-            image_sha = str(image).split(' ')[0]
-            if not verify_checksum(image_filepath, image_sha):
-                failed_checksums[image_filename] = image_sha
+    with click.progressbar(sha1sums, empty_char='☆', fill_char='★', width=87) as count:
+        for galaxy in count:
+            download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)
 
 
 if __name__ == '__main__':
-    main()  # pylint: disable = no-value-for-parameter
+    download_pipeline()  # pylint: disable = no-value-for-parameter
