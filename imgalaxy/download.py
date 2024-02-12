@@ -134,7 +134,9 @@ def download_pipeline(path, start, verify_checksums, save_npy):
     path = Path(path)
     sha1sums_filepath = get_files_and_sha1sum(path)
     sha1sums = open(sha1sums_filepath, 'r').readlines()[start:]
-    with click.progressbar(sha1sums, empty_char='☆', fill_char='★', width=87) as count:
+    with click.progressbar(
+        sha1sums, empty_char='☆', fill_char='★', width=87, length=len(sha1sums)
+    ) as count:
         for galaxy in count:
             download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)
 
