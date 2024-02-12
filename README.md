@@ -1,3 +1,3 @@
 # IMGalaxy
 
-### Segmentation using convolutional NN.
+### Enhance galactic image analysis using deep learning
