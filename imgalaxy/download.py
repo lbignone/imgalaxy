@@ -106,16 +106,53 @@ def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) 
             raise ValueError(f"Wrong sha1 values for galaxy {galaxy}.")
 
 
+def download_pipeline(
+    start: int = 0, verify_checksums: bool = True, save_npy: bool = True
+):
+    """Download galaxies from GZ3D dataset.
+
+    Parameters
+    ----------
+    start : int, between 0 and 29815, default=0.
+        Starting point of the download.
+    verify_checksums : bool, default=True
+        Verify checksum for downloaded images.
+    save_npy : bool, default=True
+        Save galaxies' image and masks as .npy numpy arrays.
+
+    Returns no value.
+
+    """
+    logger.info("Downloading image names and sha1 checksums...")
+    metadata_filepath = get_galaxies_metadata()
+    galaxies_metadata = open(metadata_filepath, 'r').readlines()[start:]
+    logger.info(f"Downloading from galaxy number {start}. This may take a while...")
+    counter = 1
+    for galaxy in galaxies_metadata:
+        logger.info(f"Downloading galaxy {counter} of {len(galaxies_metadata)}.")
+        download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)
+        counter += 1
+
+
 @click.command()
-@click.option("--start", "-s", default=0, help="Starting point of download.")
-@click.option("--verify_checksums", default=True, help="Disable hash checksums.")
+@click.option(
+    "--start", "-s", default=0, show_default=True, help="Starting point of download."
+)
+@click.option(
+    "--verify_checksums",
+    default=True,
+    show_default=True,
+    help="Verify files' hash checksums.",
+)
 @click.option(
     "--save-npy",
     default=False,
     is_flag=True,
+    show_default=True,
     help="Save copies of the images as .npy (numpy arrays).",
 )
-def download_pipeline(start, verify_checksums, save_npy):
+def cli(start, verify_checksums, save_npy):
+    """CLI wrapper around `download_galaxy()`."""
     logger.info("Downloading image names and sha1 checksums...")
     metadata_filepath = get_galaxies_metadata()
     galaxies_metadata = open(metadata_filepath, 'r').readlines()[start:]
@@ -133,4 +170,4 @@ def download_pipeline(start, verify_checksums, save_npy):
 
 
 if __name__ == '__main__':
-    download_pipeline()  # pylint: disable = no-value-for-parameter
+    cli()  # pylint: disable = no-value-for-parameter
