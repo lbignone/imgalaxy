@@ -8,8 +8,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "3.11.4"
-# tensorflow = { version = "^2.14", extras = ["cuda"] }
 tensorflow = "2.14"
+# tensorflow = { version = "^2.14", extras = ["cuda"] }
 scikit-learn = "^1.4.0"
 tensorflow-datasets = "^4.9.4"
 python-decouple = "^3.8"

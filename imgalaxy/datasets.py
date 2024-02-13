@@ -1,7 +1,7 @@
 """Galaxy Zoo 3D Dataset."""
 import tensorflow_datasets as tfds
 
-from imgalaxy.cfg import DATA_DIR
+from imgalaxy.cfg import BASE_URL, DATA_DIR
 
 IMAGES = [
     "gz3d_1-641253_37_14744505",
@@ -14,6 +14,11 @@ IMAGES = [
 
 class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for my_dataset dataset."""
+
+    _URL = BASE_URL
+    _URL_GZ = "https://data.galaxyzoo.org/"
+    _DESCRIPTION = "???"
+    _CITATION = "???"
 
     VERSION = tfds.core.Version('0.1.0')
     RELEASE_NOTES = {'0.1.0': 'Initial release.'}
@@ -42,12 +47,12 @@ class GalaxyZoo3Dataset(tfds.core.GeneratorBasedBuilder):
 
     def _generate_examples(self, path):
         """Generator of examples for each split."""
-        for img_path in path.glob('*.gz'):
-            img_name = img_path.with_suffix("").with_suffix("")
-            yield img_path.name, {
-                'image': DATA_DIR / f"{img_name}_image.npy",
-                'mask_center': DATA_DIR / f"{img_name}_mask_center.npy",
-                'mask_stars': DATA_DIR / f"{img_name}_mask_stars.npy",
-                'mask_spiral': DATA_DIR / f"{img_name}_mask_spiral.npy",
-                'mask_bar': DATA_DIR / f"{img_name}_mask_bar.npy",
+        for galaxy_path in path.glob('*.gz'):  # to loop over galaxies once
+            name = galaxy_path.with_suffix("").with_suffix("").name  # remove .fits.gz
+            yield name, {
+                'image': DATA_DIR / f"{name}_image.npy",
+                'mask_center': DATA_DIR / f"{name}_mask_center.npy",
+                'mask_stars': DATA_DIR / f"{name}_mask_stars.npy",
+                'mask_spiral': DATA_DIR / f"{name}_mask_spiral.npy",
+                'mask_bar': DATA_DIR / f"{name}_mask_bar.npy",
             }

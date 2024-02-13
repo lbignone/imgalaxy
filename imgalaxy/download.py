@@ -11,29 +11,29 @@ from imgalaxy.cfg import (
     BASE_URL,
     CHECKSUMS_FILENAME,
     DATA_DIR,
-    MANGA_SHA1SUM,
-    RESOURCES_DIR,
+    METADATA_DIR,
+    METADATA_FILENAMES,
+    SHA1SUM_URL,
 )
 
 logging.basicConfig(level='INFO')
 logger = logging.getLogger(f"imgalaxy.{__file__}")
 
 
-def get_galaxies_metadata() -> Path:
-    """Get filenames and their checksums for the galaxies. Takes no arguments.
+def get_galaxies_metadata() -> None:
+    """Download and save metadata files. Takes no arguments and returns no value."""
+    logger.info("Downloading image names and sha1 checksums...")
+    sha1_response = requests.get(BASE_URL + SHA1SUM_URL, timeout=360)
+    with open(METADATA_DIR / CHECKSUMS_FILENAME, mode='wb') as f:
+        f.write(sha1_response.content)
+    logger.info(f"Checksums file saved in {METADATA_DIR / CHECKSUMS_FILENAME}.")
 
-    Returns
-    -------
-    path : pathlib.Path
-        Location where the metadata was saved.
-
-    """
-    path = RESOURCES_DIR / CHECKSUMS_FILENAME
-    response = requests.get(BASE_URL + MANGA_SHA1SUM, timeout=360)
-    with open(path, mode='wb') as f:
-        f.write(response.content)
-    logging.info(f"Checksums file saved in {path}.")
-    return path
+    for name in METADATA_FILENAMES[1:]:
+        logger.info(f"Downloading {name.replace('.fits', '')}.")
+        response = requests.get(BASE_URL + name, timeout=180)
+        with open(METADATA_DIR / name, mode='wb') as f:
+            f.write(response.content)
+            logger.info(f"File {METADATA_DIR / name} saved.")
 
 
 def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
@@ -95,6 +95,9 @@ def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) 
     galaxy_filename = str(galaxy).split(' ')[2].strip()
     response = requests.get(BASE_URL + galaxy_filename, timeout=180)
     filepath = DATA_DIR / galaxy_filename
+    if galaxy_filename.endswith(".fits"):
+        filepath = METADATA_DIR / galaxy_filename
+        save_npy = False  # these files were already downloaded by now.
     with open(filepath, 'wb') as f:
         f.write(response.content)
         if save_npy:
@@ -114,7 +117,7 @@ def download_pipeline(
     Parameters
     ----------
     start : int, between 0 and 29815, default=0.
-        Starting point of the download.
+        Starting point of the download. To not start over in the case of an interruption.
     verify_checksums : bool, default=True
         Verify checksum for downloaded images.
     save_npy : bool, default=True
@@ -123,9 +126,8 @@ def download_pipeline(
     Returns no value.
 
     """
-    logger.info("Downloading image names and sha1 checksums...")
-    metadata_filepath = get_galaxies_metadata()
-    galaxies_metadata = open(metadata_filepath, 'r').readlines()[start:]
+    get_galaxies_metadata()
+    galaxies_metadata = open(METADATA_DIR / CHECKSUMS_FILENAME, 'r').readlines()[start:]
     logger.info(f"Downloading from galaxy number {start}. This may take a while...")
     counter = 1
     for galaxy in galaxies_metadata:
@@ -149,13 +151,12 @@ def download_pipeline(
     default=False,
     is_flag=True,
     show_default=True,
-    help="Save copies of the images as .npy (numpy arrays).",
+    help="Save copies of as .npy (numpy arrays).",
 )
 def cli(start, verify_checksums, save_npy):
     """CLI wrapper around `download_galaxy()`."""
-    logger.info("Downloading image names and sha1 checksums...")
-    metadata_filepath = get_galaxies_metadata()
-    galaxies_metadata = open(metadata_filepath, 'r').readlines()[start:]
+    get_galaxies_metadata()
+    galaxies_metadata = open(METADATA_DIR / CHECKSUMS_FILENAME, 'r').readlines()[start:]
     logger.info("Downloading Galaxy Zoo 3D dataset. This may take several hours...")
     with click.progressbar(
         galaxies_metadata,
@@ -164,9 +165,10 @@ def cli(start, verify_checksums, save_npy):
         width=0,
         length=len(galaxies_metadata),
         show_pos=True,
-    ) as count:
-        for galaxy in count:
+    ) as galaxies:
+        for galaxy in galaxies:
             download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)
+    logger.info("All done, bye =)")
 
 
 if __name__ == '__main__':
