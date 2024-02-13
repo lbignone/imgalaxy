@@ -18,7 +18,7 @@ from imgalaxy.cfg import (
 )
 
 logging.basicConfig(level='INFO')
-logger = logging.getLogger(f"imgalaxy.{__file__}")
+logger = logging.getLogger(f"imgalaxy.{Path(__file__).resolve().stem}")
 
 
 def download_metadata() -> None:
