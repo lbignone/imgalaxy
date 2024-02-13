@@ -9,8 +9,9 @@ from astropy.io import fits
 
 from imgalaxy.cfg import (
     BASE_URL,
-    CHECKSUMS_FILENAME,
+    CHECKSUMS_FILEPATH,
     DATA_DIR,
+    GALAXIES_CACHE,
     METADATA_DIR,
     METADATA_FILENAMES,
     SHA1SUM_URL,
@@ -20,20 +21,26 @@ logging.basicConfig(level='INFO')
 logger = logging.getLogger(f"imgalaxy.{__file__}")
 
 
-def get_galaxies_metadata() -> None:
+def download_metadata() -> None:
     """Download and save metadata files. Takes no arguments and returns no value."""
-    logger.info("Downloading image names and sha1 checksums...")
-    sha1_response = requests.get(BASE_URL + SHA1SUM_URL, timeout=360)
-    with open(METADATA_DIR / CHECKSUMS_FILENAME, mode='wb') as f:
-        f.write(sha1_response.content)
-    logger.info(f"Checksums file saved in {METADATA_DIR / CHECKSUMS_FILENAME}.")
+    if (CHECKSUMS_FILEPATH).is_file():
+        logger.info(f"Using checksums file at: {CHECKSUMS_FILEPATH}")
+    else:
+        logger.info("Downloading image names and sha1 checksums...")
+        sha1_response = requests.get(BASE_URL + SHA1SUM_URL, timeout=360)
+        with open(CHECKSUMS_FILEPATH, mode='wb') as f:
+            f.write(sha1_response.content)
+        logger.info(f"Checksums file saved in {CHECKSUMS_FILEPATH}")
 
     for name in METADATA_FILENAMES[1:]:
-        logger.info(f"Downloading {name.replace('.fits', '')}.")
-        response = requests.get(BASE_URL + name, timeout=180)
-        with open(METADATA_DIR / name, mode='wb') as f:
-            f.write(response.content)
-            logger.info(f"File {METADATA_DIR / name} saved.")
+        if (METADATA_DIR / name).is_file():
+            logger.info(f"Using cached file {METADATA_DIR / name}")
+        else:
+            logger.info(f"Downloading {name.replace('.fits', '')}...")
+            response = requests.get(BASE_URL + name, timeout=180)
+            with open(METADATA_DIR / name, mode='wb') as f:
+                f.write(response.content)
+                logger.info(f"File {METADATA_DIR / name} saved.")
 
 
 def verify_checksum(filepath: Path, sha1_hash: str) -> bool:
@@ -66,15 +73,17 @@ def save_galaxy_npy(filepath: Path) -> None:
     Returns no value.
 
     """
-    location = filepath.parent
     name = filepath.with_suffix('').with_suffix('')  # rm .fits & .gz from filename
-    with fits.open(filepath) as hdul:
-        # pylint: disable=no-member
-        np.save(location / f"{name}_image.npy", hdul[0].data)
-        np.save(location / f"{name}_mask_center.npy", hdul[1].data)
-        np.save(location / f"{name}_mask_stars.npy", hdul[2].data)
-        np.save(location / f"{name}_mask_spiral.npy", hdul[3].data)
-        np.save(location / f"{name}_mask_bar.npy", hdul[4].data)
+    location = filepath.parent / name.stem
+    if not location.is_dir():
+        location.mkdir(exist_ok=True, parents=True)
+        with fits.open(filepath) as hdul:
+            # pylint: disable=no-member
+            np.save(location / f"{name}_image.npy", hdul[0].data)
+            np.save(location / f"{name}_mask_center.npy", hdul[1].data)
+            np.save(location / f"{name}_mask_stars.npy", hdul[2].data)
+            np.save(location / f"{name}_mask_spiral.npy", hdul[3].data)
+            np.save(location / f"{name}_mask_bar.npy", hdul[4].data)
 
 
 def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) -> None:
@@ -93,20 +102,18 @@ def download_galaxy(galaxy: str, checksum: bool = True, save_npy: bool = False) 
 
     """
     galaxy_filename = str(galaxy).split(' ')[2].strip()
-    response = requests.get(BASE_URL + galaxy_filename, timeout=180)
     filepath = DATA_DIR / galaxy_filename
-    if galaxy_filename.endswith(".fits"):
-        filepath = METADATA_DIR / galaxy_filename
-        save_npy = False  # these files were already downloaded by now.
-    with open(filepath, 'wb') as f:
-        f.write(response.content)
-        if save_npy:
-            save_galaxy_npy(filepath)
+    if filepath not in GALAXIES_CACHE:
+        response = requests.get(BASE_URL + galaxy_filename, timeout=180)
+        with open(filepath, 'wb') as f:
+            f.write(response.content)
+            if save_npy:
+                save_galaxy_npy(filepath)
 
-    if checksum:
-        image_sha = str(galaxy).split(' ')[0]
-        if not verify_checksum(filepath, image_sha):
-            raise ValueError(f"Wrong sha1 values for galaxy {galaxy}.")
+        if checksum:
+            image_sha = str(galaxy).split(' ')[0]
+            if not verify_checksum(filepath, image_sha):
+                raise ValueError(f"Wrong sha1 values for galaxy {galaxy}.")
 
 
 def download_pipeline(
@@ -126,10 +133,12 @@ def download_pipeline(
     Returns no value.
 
     """
-    get_galaxies_metadata()
-    galaxies_metadata = open(METADATA_DIR / CHECKSUMS_FILENAME, 'r').readlines()[start:]
+    download_metadata()
+    galaxies_metadata = open(CHECKSUMS_FILEPATH, 'r').readlines()
     logger.info(f"Downloading from galaxy number {start}. This may take a while...")
-    counter = 1
+    if GALAXIES_CACHE:
+        logger.info(f"Cache found! Starting from galaxy number {len(GALAXIES_CACHE)}.")
+    counter = len(GALAXIES_CACHE)
     for galaxy in galaxies_metadata:
         logger.info(f"Downloading galaxy {counter} of {len(galaxies_metadata)}.")
         download_galaxy(galaxy, checksum=verify_checksums, save_npy=save_npy)
@@ -137,9 +146,6 @@ def download_pipeline(
 
 
 @click.command()
-@click.option(
-    "--start", "-s", default=0, show_default=True, help="Starting point of download."
-)
 @click.option(
     "--verify_checksums",
     default=True,
@@ -153,11 +159,13 @@ def download_pipeline(
     show_default=True,
     help="Save copies of as .npy (numpy arrays).",
 )
-def cli(start, verify_checksums, save_npy):
+def cli(verify_checksums, save_npy):
     """CLI wrapper around `download_galaxy()`."""
-    get_galaxies_metadata()
-    galaxies_metadata = open(METADATA_DIR / CHECKSUMS_FILENAME, 'r').readlines()[start:]
+    download_metadata()
+    galaxies_metadata = open(CHECKSUMS_FILEPATH, 'r').readlines()
     logger.info("Downloading Galaxy Zoo 3D dataset. This may take several hours...")
+    if GALAXIES_CACHE:
+        logger.info(f"Cache found! Starting from galaxy number {len(GALAXIES_CACHE)}.")
     with click.progressbar(
         galaxies_metadata,
         empty_char="☆",

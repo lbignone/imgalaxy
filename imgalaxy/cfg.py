@@ -27,4 +27,5 @@ METADATA_FILENAMES = [
     "gz3d_galaxy_centers.fits",
     "gz3d_foreground_stars.fits",
 ]
-CHECKSUMS_FILENAME = METADATA_FILENAMES[0]
+CHECKSUMS_FILEPATH = METADATA_DIR / METADATA_FILENAMES[0]
+GALAXIES_CACHE = [x for x in DATA_DIR.glob('*') if x.suffix == '.gz']  # downloaded
