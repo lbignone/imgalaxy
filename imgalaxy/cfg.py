@@ -13,11 +13,13 @@ RESOURCES_DIR = PKG_PATH / "resources"
 DATA_DIR = RESOURCES_DIR / "dataset"
 METADATA_DIR = RESOURCES_DIR / "metadata"
 LOGS_DIR = RESOURCES_DIR / "logs"
+MODELS_DIR = RESOURCES_DIR / "models"
 
 Path(RESOURCES_DIR).mkdir(exist_ok=True, parents=True)
 Path(DATA_DIR).mkdir(exist_ok=True, parents=True)
 Path(METADATA_DIR).mkdir(exist_ok=True, parents=True)
 Path(LOGS_DIR).mkdir(exist_ok=True, parents=True)
+Path(MODELS_DIR).mkdir(exist_ok=True, parents=True)
 
 BASE_URL = "https://data.sdss.org/sas/dr17/manga/morphology/galaxyzoo3d/v4_0_0/"
 SHA1SUM_URL = "manga_morphology_galaxyzoo3d_v4_0_0.sha1sum"
