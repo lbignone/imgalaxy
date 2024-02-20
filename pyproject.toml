@@ -7,9 +7,8 @@ packages = [{include = "imgalaxy"}]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11.4"
-tensorflow = "2.14"
-# tensorflow = { version = "^2.14", extras = ["cuda"] }
+python = "3.11.5"
+tensorflow = { version = "^2.14", extras = ["cuda"] }
 scikit-learn = "^1.4.0"
 tensorflow-datasets = "^4.9.4"
 python-decouple = "^3.8"
@@ -17,8 +16,7 @@ astropy = "^5.0.0"
 importlib-resources = "^6.1.1"
 click = "^8.1.7"
 matplotlib = "^3.8.2"
-# galaxies-datasets = "^0.1.2"
-galaxies-datasets = {git="git@github.com:lbignone/galaxies_datasets.git", branch = "galaxyzoo3d"}
+# galaxies-datasets = {git="git@github.com:lbignone/galaxies_datasets.git", branch="galaxyzoo3d"}
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"

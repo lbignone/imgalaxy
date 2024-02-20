@@ -1,4 +1,4 @@
-FROM python:3.11.4
+FROM tensorflow/build:2.14-python3.11
 
 RUN apt-get update \
     && apt-get install -y neovim \
@@ -17,5 +17,5 @@ COPY poetry.lock /imgalaxy/poetry.lock
 WORKDIR /imgalaxy
 COPY . /imgalaxy/
 RUN poetry config virtualenvs.create false
-# RUN poetry install -vvv --no-root
 RUN poetry install --no-interaction
+RUN poetry add git+https://github.com/lbignone/galaxies_datasets.git#galaxyzoo3d
