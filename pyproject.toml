@@ -55,6 +55,7 @@ disable = [
 
 [tool.pylint.'FORMAT']
 max-line-length = 88  # as in black
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
