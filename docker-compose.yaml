@@ -15,9 +15,9 @@ services:
       - type: bind
         source: ./imgalaxy
         target: /imgalaxy/imgalaxy
-      - type: bind
-        source: ./.env
-        target: /imgalaxy/.env
+      #- type: bind
+      #  source: ./.env
+      #  target: /imgalaxy/.env
     working_dir: /imgalaxy/
 
     networks:
