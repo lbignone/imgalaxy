@@ -4,21 +4,21 @@ services:
   # ETL
   imgalaxy:
     build: .
+    image: imgalaxy:latest
     container_name: imgalaxy
     ports:
       - ${JUPYTER_PORT}:${JUPYTER_PORT}
     expose:
       - ${JUPYTER_PORT}
-    command: bash -c "poetry run python imgalaxy/train.py"
     volumes:
       - ${GALAXY_ZOO_DIR}:/root/tensorflow_datasets/galaxy_zoo3d
       - type: bind
         source: ./imgalaxy
         target: /imgalaxy/imgalaxy
-      #- type: bind
-      #  source: ./.env
-      #  target: /imgalaxy/.env
     working_dir: /imgalaxy/
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
 
     networks:
       - imgalaxy-network

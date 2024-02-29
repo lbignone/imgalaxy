@@ -1,4 +1,6 @@
-FROM tensorflow/build:2.14-python3.11
+# FROM tensorflow/build:2.14-python3.11
+# FROM nvcr.io/nvidia/tensorflow:23.11-tf2-py3-igpu
+FROM tensorflow/tensorflow:2.15.0-gpu
 
 RUN apt-get update \
     && apt-get install -y neovim \
@@ -17,5 +19,6 @@ COPY poetry.lock /imgalaxy/poetry.lock
 WORKDIR /imgalaxy
 COPY . /imgalaxy/
 RUN poetry config virtualenvs.create false
-RUN poetry install --no-interaction
-RUN poetry add git+https://github.com/lbignone/galaxies_datasets.git#galaxyzoo3d
+RUN poetry install --no-interaction --without dev
+CMD tail -f  /dev/null
+# ENTRYPOINT ["poetry", "run", "python", "imgalaxy/train.py"]

@@ -81,7 +81,7 @@ def upsample_block(x, conv_features, n_filters):
 def build_unet_model():
     inputs = layers.Input(shape=(SIZE, SIZE, 3))
 
-    f1, p1 = downsample_block(inputs, SIZE / 2)
+    f1, p1 = downsample_block(inputs, SIZE // 2)
     f2, p2 = downsample_block(p1, SIZE)
     f3, p3 = downsample_block(p2, SIZE * 2)
     f4, p4 = downsample_block(p3, SIZE * 4)
@@ -91,7 +91,7 @@ def build_unet_model():
     u6 = upsample_block(bottleneck, f4, SIZE * 4)
     u7 = upsample_block(u6, f3, SIZE * 2)
     u8 = upsample_block(u7, f2, SIZE)
-    u9 = upsample_block(u8, f1, SIZE / 2)
+    u9 = upsample_block(u8, f1, SIZE // 2)
 
     outputs = layers.Conv2D(2, 1, padding="same", activation="softmax")(u9)
 
@@ -139,9 +139,9 @@ if __name__ == '__main__':
     unet_model = build_unet_model()
 
     unet_model.compile(
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(),  # pylint: disable=no-member
         loss="sparse_categorical_crossentropy",
-        metrics="accuracy",
+        metrics=["accuracy"],
     )
 
     STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
