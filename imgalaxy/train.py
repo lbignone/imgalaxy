@@ -102,7 +102,7 @@ def build_unet_model():
 
 if __name__ == '__main__':
     ds, info = tfds.load(
-        'galaxy_zoo3d', split=['train[2:3420]', 'train[3666:6999]'], with_info=True
+        'galaxy_zoo3d', split=['train[:75%]', 'train[75%:]'], with_info=True
     )
     ds_train, ds_test = ds[0], ds[1]
 
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         BUFFER_SIZE, BATCH_SIZE = 1000, 64
         TRAIN_LENGTH, VAL_SIZE, TEST_SIZE = 22360, 4992, 2461
     elif TRAIN_WITH == 'only':
-        BUFFER_SIZE, BATCH_SIZE = 300, 16
+        BUFFER_SIZE, BATCH_SIZE = 300, 32
         if MASK == 'spiral_mask':
             ds_train = ds_train.filter(
                 lambda x: tf.reduce_max(x['spiral_mask']) >= MIN_VOTE

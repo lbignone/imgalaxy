@@ -19,6 +19,7 @@ services:
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - TF_GPU_ALLOCATOR=cuda_malloc_async
 
     networks:
       - imgalaxy-network
