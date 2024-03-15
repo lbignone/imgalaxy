@@ -1,5 +1,3 @@
-# FROM tensorflow/build:2.14-python3.11
-# FROM nvcr.io/nvidia/tensorflow:23.11-tf2-py3-igpu
 FROM tensorflow/tensorflow:2.15.0-gpu
 
 RUN apt-get update \
@@ -20,5 +18,5 @@ WORKDIR /imgalaxy
 COPY . /imgalaxy/
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-interaction --without dev
-CMD tail -f  /dev/null
-# ENTRYPOINT ["poetry", "run", "python", "imgalaxy/train.py"]
+# CMD tail -f  /dev/null
+ENTRYPOINT ["poetry", "run", "python", "imgalaxy/train.py"]

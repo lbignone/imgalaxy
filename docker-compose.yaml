@@ -20,6 +20,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - TF_GPU_ALLOCATOR=cuda_malloc_async
+      - WANDB_API_KEY=${WANDB_API_KEY}
 
     networks:
       - imgalaxy-network
