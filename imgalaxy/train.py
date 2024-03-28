@@ -1,12 +1,11 @@
-import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import wandb
-from keras import layers
-from sklearn.metrics import confusion_matrix, jaccard_score
+from keras import layers, metrics
 from wandb.keras import WandbMetricsLogger
 
 from imgalaxy.constants import MASK, MIN_VOTE, NUM_EPOCHS, SIZE, THRESHOLD, TRAIN_WITH
+from imgalaxy.helpers import evaluate_model, jaccard
 
 # from galaxies_datasets import datasets
 
@@ -103,37 +102,11 @@ def build_unet_model(dropout_rate: float = 0.3):
     return model
 
 
-def create_mask(pred_mask):
-    pred_mask = tf.argmax(pred_mask, axis=-1)
-    pred_mask = pred_mask[..., tf.newaxis]
-    return pred_mask
-
-
-def evaluate_model(dataset, model, num=1):
-    # TODO: try tf.keras.Model.evaluate()
-    if dataset:
-        for image, mask in dataset:
-            pred_mask = create_mask(model.predict(image))
-            for ind in range(num):
-                if np.amax(pred_mask[ind].numpy()) == 0:
-                    print(2 * '\n')
-                    continue
-                else:
-                    conf_matrix = confusion_matrix(
-                        pred_mask[ind].numpy().reshape(-1),
-                        mask[ind].numpy().reshape(-1),
-                    )
-                    jacc_score = jaccard_score(
-                        pred_mask[ind].numpy().reshape(-1),
-                        mask[ind].numpy().reshape(-1),
-                    )
-        return conf_matrix, jacc_score
-
-
 def train_pipeline(
     loss: str = "sparse_categorical_crossentropy",
     dropout_rate: float = 0.3,
     num_epochs: int = NUM_EPOCHS,
+    learning_rate: float = 0.0011,
 ):
     ds, _ = tfds.load(
         'galaxy_zoo3d', split=['train[:75%]', 'train[75%:]'], with_info=True
@@ -161,13 +134,14 @@ def train_pipeline(
     train_batches = train_batches.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     validation_batches = test_dataset.take(VAL_SIZE).batch(BATCH_SIZE)
     test_batches = test_dataset.skip(VAL_SIZE).take(TEST_SIZE).batch(BATCH_SIZE)
-
     unet_model = build_unet_model(dropout_rate)
 
     unet_model.compile(
-        optimizer=tf.keras.optimizers.Adam(),  # pylint: disable=no-member
+        optimizer=tf.keras.optimizers.Adam(
+            learning_rate=learning_rate
+        ),  # pylint: disable=no-member
         loss=loss,
-        metrics=["accuracy"],
+        metrics=["accuracy", jaccard, metrics.MeanIoU(2)],
         jit_compile=True,
     )
 
@@ -176,7 +150,6 @@ def train_pipeline(
     VAL_SUBSPLITS = 5
     TEST_LENGTH = VAL_SIZE + TEST_SIZE
     VALIDATION_STEPS = TEST_LENGTH // BATCH_SIZE // VAL_SUBSPLITS
-
     model_history = unet_model.fit(  # pylint: disable=unused-variable
         train_batches,
         epochs=num_epochs,
@@ -186,8 +159,8 @@ def train_pipeline(
         callbacks=[WandbMetricsLogger()],
     )
 
-    confusion_mx, jacc = evaluate_model(test_batches, unet_model)
-    return unet_model, model_history, confusion_mx, jacc
+    confusion_mx, _jacc = evaluate_model(test_batches, unet_model)
+    return unet_model, model_history, confusion_mx, _jacc
 
 
 if __name__ == '__main__':
@@ -202,7 +175,8 @@ if __name__ == '__main__':
             'size': SIZE,
             'threshold': THRESHOLD,
             'NUM_EPOCHS': NUM_EPOCHS,
+            'group': f"jose_{MASK}",
         },
     )
-    unet, history, conf_mx, jaccard = train_pipeline()
-    wandb.log({"confusion_mx": conf_mx, "jaccard": jaccard})
+    unet, history, conf_mx, jacc = train_pipeline()
+    wandb.log({"confusion_mx": conf_mx, "jaccard": jacc})
