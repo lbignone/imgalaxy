@@ -18,6 +18,7 @@ class UNet:
         batch_normalization: bool = False,
         image_size: int = 128,
         n_filters: int = 128,
+        mask: str = MASK,
         min_vote: int = 3,
     ):
         self.loss = loss
@@ -29,7 +30,13 @@ class UNet:
         self.image_size = image_size
         self.min_vote = min_vote
         self.n_filters = n_filters
+        self.mask = mask
         self.unet_model = self.build_unet_model()
+
+        if self.mask == 'spiral_mask':
+            self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 4883, 1088, 551
+        elif self.mask == 'bar_mask':
+            self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 3783, 832, 421
 
     def augment(self, input_image, input_mask):
         if tf.random.uniform(()) > 0.5:
@@ -50,7 +57,7 @@ class UNet:
 
     def load_image_train(self, datapoint):
         input_image = datapoint['image']
-        input_mask = datapoint[MASK]
+        input_mask = datapoint[self.mask]
         input_image = tf.image.resize(
             input_image, (self.image_size, self.image_size), method="nearest"
         )
@@ -65,7 +72,7 @@ class UNet:
 
     def load_image_test(self, datapoint):
         input_image = datapoint['image']
-        input_mask = datapoint[MASK]
+        input_mask = datapoint[self.mask]
         input_image = tf.image.resize(
             input_image, (self.image_size, self.image_size), method="nearest"
         )
@@ -106,12 +113,7 @@ class UNet:
 
         return f, p
 
-    def upsample_block(
-        self,
-        x,
-        conv_features,
-        n_filters,
-    ):
+    def upsample_block(self, x, conv_features, n_filters):
         x = layers.Conv2DTranspose(n_filters, 3, 2, padding="same")(x)
         x = layers.concatenate([x, conv_features])
         x = layers.Dropout(self.dropout_rate)(x)
@@ -122,10 +124,7 @@ class UNet:
     def build_unet_model(self):
         inputs = layers.Input(shape=(self.image_size, self.image_size, 3))
 
-        f1, p1 = self.downsample_block(
-            inputs,
-            self.image_size // 2,
-        )
+        f1, p1 = self.downsample_block(inputs, self.n_filters // 2)
         f2, p2 = self.downsample_block(p1, self.n_filters)
         f3, p3 = self.downsample_block(p2, self.n_filters * 2)
         f4, p4 = self.downsample_block(p3, self.n_filters * 4)
@@ -139,7 +138,9 @@ class UNet:
 
         outputs = layers.Conv2D(2, 1, padding="same", activation="softmax")(u9)
 
-        model = tf.keras.Model(inputs, outputs, name="U-Net")
+        model = tf.keras.Model(  # pylint: disable=no-member
+            inputs, outputs, name="U-Net"
+        )
 
         return model
 
@@ -149,13 +150,10 @@ class UNet:
         )
         ds_train, ds_test = ds[0], ds[1]
 
-        ds_train = ds_train.filter(lambda x: tf.reduce_max(x[MASK]) >= self.min_vote)
-        ds_test = ds_test.filter(lambda x: tf.reduce_max(x[MASK]) >= self.min_vote)
-        if MASK == 'spiral_mask':
-            TRAIN_LENGTH, VAL_SIZE, TEST_SIZE = 4883, 1088, 551
-        elif MASK == 'bar_mask':
-            TRAIN_LENGTH, VAL_SIZE, TEST_SIZE = 3783, 832, 421
-
+        ds_train = ds_train.filter(
+            lambda x: tf.reduce_max(x[self.mask]) >= self.min_vote
+        )
+        ds_test = ds_test.filter(lambda x: tf.reduce_max(x[self.mask]) >= self.min_vote)
         train_dataset = ds_train.map(
             self.load_image_train, num_parallel_calls=tf.data.AUTOTUNE
         )
@@ -169,24 +167,26 @@ class UNet:
         train_batches = train_batches.prefetch(
             buffer_size=tf.data.experimental.AUTOTUNE
         )
-        validation_batches = test_dataset.take(VAL_SIZE).batch(self.batch_size)
-        test_batches = (  # pylint: disable=unused-variable # noqa
-            test_dataset.skip(VAL_SIZE).take(TEST_SIZE).batch(self.batch_size)
+        validation_batches = test_dataset.take(self.VAL_SIZE).batch(self.batch_size)
+        test_batches = (
+            test_dataset.skip(self.VAL_SIZE).take(self.TEST_SIZE).batch(self.batch_size)
         )
 
         self.unet_model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
+            optimizer=tf.keras.optimizers.Adam(  # pylint: disable=no-member
+                learning_rate=self.learning_rate
+            ),
             loss=self.loss,
             metrics=["accuracy", jaccard, dice],
             jit_compile=True,
         )
 
-        STEPS_PER_EPOCH = TRAIN_LENGTH // self.batch_size
-
+        STEPS_PER_EPOCH = self.TRAIN_LENGTH // self.batch_size
         VAL_SUBSPLITS = 5
-        TEST_LENGTH = VAL_SIZE + TEST_SIZE
+        TEST_LENGTH = self.VAL_SIZE + self.TEST_SIZE
         VALIDATION_STEPS = TEST_LENGTH // self.batch_size // VAL_SUBSPLITS
-        model_history = self.unet_model.fit(  # pylint: disable=unused-variable
+
+        model_history = self.unet_model.fit(
             train_batches,
             epochs=self.num_epochs,
             steps_per_epoch=STEPS_PER_EPOCH,
@@ -195,4 +195,4 @@ class UNet:
             callbacks=[WandbMetricsLogger()],
         )
 
-        return self.unet_model, model_history
+        return model_history, test_batches
