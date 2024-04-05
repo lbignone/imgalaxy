@@ -1,37 +1,66 @@
 import click
-import wandb
 
+import wandb
 from imgalaxy.constants import IMAGE_SIZE, NUM_EPOCHS, THRESHOLD
 from imgalaxy.unet import UNet
 
 
 @click.command()
-@click.option("--dropout-rate", default=0.3, help="Inner-layer dropout rate.")
-@click.option("--mask", default='bar_mask', help="Target mask to use for training.")
-@click.option("--learning-rate", default=0.0011, help="Learning rate for training.")
 @click.option(
-    "--num-epochs", default=NUM_EPOCHS, help="Total number of epochs (if no patience)."
+    "--dropout-rate", default=0.3, show_default=True, help="Inner-layer dropout rate."
 )
 @click.option(
-    "--batch-size", default=32, help="Size of the batches used for train/test."
+    "--mask",
+    default='bar_mask',
+    show_default=True,
+    help="Target mask to use for training.",
 )
 @click.option(
-    "--image-size", default=IMAGE_SIZE, help="Input images are resized for training."
+    "--learning-rate",
+    default=0.0011,
+    show_default=True,
+    help="Learning rate for training.",
 )
 @click.option(
-    "--n-filters", default=128, help="Base number of filters for convolutions."
+    "--num-epochs",
+    default=NUM_EPOCHS,
+    show_default=True,
+    help="Total number of epochs (if no patience).",
 )
 @click.option(
-    "--min-vote", default=3, help="Min votes for a pixel to be positvely labeled."
+    "--batch-size",
+    default=32,
+    show_default=True,
+    help="Size of the batches used for train/test.",
+)
+@click.option(
+    "--image-size",
+    default=IMAGE_SIZE,
+    show_default=True,
+    help="Input images are resized for training.",
+)
+@click.option(
+    "--n-filters",
+    default=128,
+    show_default=True,
+    help="Base number of filters for convolutions.",
+)
+@click.option(
+    "--min-vote",
+    default=3,
+    show_default=True,
+    help="Min votes for a pixel to be positvely labeled.",
 )
 @click.option(
     "--batch-normalization",
     default=False,
+    show_default=True,
     help="Batch normalization in each double convolution.",
 )
 @click.option(
     "--loss",
     default="sparse_categorical_crossentropy",
+    show_default=True,
     help="Loss function for training.",
 )
 def train(

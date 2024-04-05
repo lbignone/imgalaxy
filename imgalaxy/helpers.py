@@ -1,5 +1,9 @@
 """Helper methods"""
+
+from datetime import datetime
+
 import keras
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix, jaccard_score
@@ -65,3 +69,28 @@ def dice(y_true, y_pred):
     score = 2 * tp.result() / (2 * tp.result() + fp.result() + fn.result())
 
     return score.numpy()
+
+
+class TimeCallback(tf.keras.callbacks.Callback):  # pylint: disable=no-member
+    def __init__(self):
+        self.times = []
+        self.epochs = []
+        self.timetaken = tf.timestamp()
+
+    def on_epoch_end(self, epoch):
+        self.times.append(tf.timestamp() - self.timetaken)
+        self.epochs.append(epoch)
+
+    def on_train_end(self):
+        plt.xlabel('Epoch')
+        plt.ylabel('Total time taken until an epoch in seconds')
+        plt.plot(self.epochs, self.times, 'ro')
+        for i in range(len(self.epochs)):
+            j = self.times[i].numpy()
+            if i == 0:
+                plt.text(i, j, str(round(j, 3)))
+            else:
+                j_prev = self.times[i - 1].numpy()
+                plt.text(i, j, str(round(j - j_prev, 3)))
+
+        plt.savefig(datetime.now().strftime("%Y%m%d%H%M%S") + ".png")
