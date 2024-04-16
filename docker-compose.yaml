@@ -10,6 +10,7 @@ services:
       - ${JUPYTER_PORT}:${JUPYTER_PORT}
     expose:
       - ${JUPYTER_PORT}
+    command: bash -c 'poetry run python imgalaxy/train.py --mask spiral_mask'
     volumes:
       - ${GALAXY_ZOO_DIR}:/root/tensorflow_datasets/galaxy_zoo3d
       - type: bind
@@ -19,10 +20,8 @@ services:
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - TF_GPU_ALLOCATOR=cuda_malloc_async
       - TF_FORCE_GPU_ALLOW_GROWTH=true
       - WANDB_API_KEY=${WANDB_API_KEY}
-
     networks:
       - imgalaxy-network
 

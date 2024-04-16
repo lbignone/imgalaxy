@@ -77,7 +77,7 @@ def train(
 ):
     wandb.init(
         project="galaxy-segmentation-project",
-        name="jose_0",
+        name="jose_spiral",
         config={
             'loss': loss,
             'dropout': dropout_rate,
