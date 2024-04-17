@@ -1,0 +1,25 @@
+name: sweap 
+description: spiral arms
+program: train.py
+method: bayes
+metric:
+  name: val_loss
+  goal: maximize
+parameters:
+  dropout:
+    distribution: uniform
+    max: 0.4
+    min: 0.2
+  learning_rate: 
+    distribution: uniform
+    max: 0.01
+    min: 0.001
+  batch_size:
+    values: [32, 64]
+  batch_normalization: 
+    values: [False, True]
+  n_filters:
+    values: [64, 128]
+  min_vote:
+    values: int = 3
+
