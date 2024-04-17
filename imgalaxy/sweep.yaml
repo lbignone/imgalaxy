@@ -3,7 +3,7 @@ description: spiral arms
 program: train.py
 method: bayes
 metric:
-  name: val_loss
+  name: val_jaccard
   goal: maximize
 parameters:
   dropout:

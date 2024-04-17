@@ -1,8 +1,9 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from keras import layers
-from wandb.keras import WandbMetricsLogger
+from wandb.keras import ModelCheckpoint, WandbMetricsLogger
 
+from imgalaxy.cfg import MODELS_DIR
 from imgalaxy.constants import BUFFER_SIZE, MASK, NUM_EPOCHS, THRESHOLD
 from imgalaxy.helpers import dice, jaccard
 
@@ -192,7 +193,10 @@ class UNet:
             steps_per_epoch=STEPS_PER_EPOCH,
             validation_steps=VALIDATION_STEPS,
             validation_data=validation_batches,
-            callbacks=[WandbMetricsLogger()],
+            callbacks=[
+                WandbMetricsLogger(),
+                ModelCheckpoint(MODELS_DIR / f"{self.mask}.keras"),
+            ],
         )
 
         return model_history, test_batches
