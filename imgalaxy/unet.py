@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from keras import layers
-from wandb.keras import ModelCheckpoint, WandbMetricsLogger
+from wandb.keras import WandbMetricsLogger
 
 from imgalaxy.cfg import MODELS_DIR
 from imgalaxy.constants import BUFFER_SIZE, MASK, NUM_EPOCHS, THRESHOLD
@@ -195,7 +195,7 @@ class UNet:
             validation_data=validation_batches,
             callbacks=[
                 WandbMetricsLogger(),
-                ModelCheckpoint(MODELS_DIR / f"{self.mask}.keras"),
+                tf.keras.callbacks.ModelCheckpoint(MODELS_DIR / f"{self.mask}.keras"),
             ],
         )
 

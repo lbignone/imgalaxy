@@ -10,7 +10,7 @@ services:
       - ${JUPYTER_PORT}:${JUPYTER_PORT}
     expose:
       - ${JUPYTER_PORT}
-    command: bash -c 'poetry run wandb sweep sweep.yaml'
+    command: bash -c 'poetry run python imgalaxy/train.py'
     volumes:
       - ${GALAXY_ZOO_DIR}:/root/tensorflow_datasets/galaxy_zoo3d
       - type: bind

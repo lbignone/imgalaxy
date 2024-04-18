@@ -1,6 +1,8 @@
 import click
+import yaml
 
 import wandb
+from imgalaxy.cfg import PKG_PATH
 from imgalaxy.constants import IMAGE_SIZE, NUM_EPOCHS, THRESHOLD
 from imgalaxy.unet import UNet
 
@@ -111,4 +113,6 @@ def train(
 
 
 if __name__ == '__main__':
-    train()  # pylint: disable=no-value-for-parameter
+    sweep_configs = yaml.safe_load((PKG_PATH / 'sweep.yaml').read_text())
+    sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
+    wandb.agent(sweep_id, function=train)
