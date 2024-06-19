@@ -98,9 +98,9 @@ class UNet:
             padding="same",
             activation="relu",
             kernel_initializer="he_normal",
-            kernel_regularizer=self.kernel_regularizer,
-            bias_regularizer=self.bias_regularizer,
-            activity_regularizer=self.activity_regularizer,
+            kernel_regularizer=self.kernel_regularization,
+            bias_regularizer=self.bias_regularization,
+            activity_regularizer=self.activity_regularization,
         )(x)
         if self.batch_normalization:
             x = layers.BatchNormalization()(x)
@@ -129,9 +129,9 @@ class UNet:
             3,
             2,
             padding="same",
-            kernel_regularizer=self.kernel_regularizer,
-            bias_regularizer=self.bias_regularizer,
-            activity_regularizer=self.activity_regularizer,
+            kernel_regularizer=self.kernel_regularization,
+            bias_regularizer=self.bias_regularization,
+            activity_regularizer=self.activity_regularization,
         )(x)
         x = layers.concatenate([x, conv_features])
         x = layers.Dropout(self.dropout_rate)(x)
