@@ -96,7 +96,6 @@ def train(
             'group': f"jose_{mask}",
         },
     ):
-
         unet = UNet(
             loss=loss,
             dropout_rate=dropout_rate,
@@ -109,14 +108,14 @@ def train(
             mask=mask,
             min_vote=min_vote,
         )
-        history, test_data = unet.train_pipeline()
+        _, test_data = unet.train_pipeline()
         evaluate_model(test_data, unet.unet_model, num=3)
-        #return history, test_data
 
 
 if __name__ == '__main__':
-    #sweep_configs = yaml.safe_load((PKG_PATH / 'sweep.yaml').read_text())
-    #sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
-    #wandb.agent(sweep_id, function=train)
-    #wandb.agent("ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37)
-    train()
+    sweep_configs = yaml.safe_load((PKG_PATH / 'sweep.yaml').read_text())
+    sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
+    wandb.agent(sweep_id, function=train)
+    wandb.agent(
+        "ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37
+    )

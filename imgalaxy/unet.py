@@ -21,6 +21,9 @@ class UNet:
         n_filters: int = 128,
         mask: str = MASK,
         min_vote: int = 3,
+        kernel_regularizer: str = None,
+        bias_regularizer: str = None,
+        activity_regularizer: str = None,
     ):
         self.loss = loss
         self.dropout_rate = dropout_rate
@@ -33,6 +36,9 @@ class UNet:
         self.n_filters = n_filters
         self.mask = mask
         self.unet_model = self.build_unet_model()
+        self.kernel_regularizer = (kernel_regularizer,)
+        self.bias_regularizer = (bias_regularizer,)
+        self.activity_regularizer = (activity_regularizer,)
 
         if self.mask == 'spiral_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 4883, 1088, 551
@@ -92,6 +98,9 @@ class UNet:
             padding="same",
             activation="relu",
             kernel_initializer="he_normal",
+            kernel_regularizer=self.kernel_regularizer,
+            bias_regularizer=self.bias_regularizer,
+            activity_regularizer=self.activity_regularizer,
         )(x)
         if self.batch_normalization:
             x = layers.BatchNormalization()(x)
@@ -115,7 +124,15 @@ class UNet:
         return f, p
 
     def upsample_block(self, x, conv_features, n_filters):
-        x = layers.Conv2DTranspose(n_filters, 3, 2, padding="same")(x)
+        x = layers.Conv2DTranspose(
+            n_filters,
+            3,
+            2,
+            padding="same",
+            kernel_regularizer=self.kernel_regularizer,
+            bias_regularizer=self.bias_regularizer,
+            activity_regularizer=self.activity_regularizer,
+        )(x)
         x = layers.concatenate([x, conv_features])
         x = layers.Dropout(self.dropout_rate)(x)
         x = self.double_conv_block(x, n_filters)
