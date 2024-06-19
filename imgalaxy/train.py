@@ -4,6 +4,7 @@ import yaml
 import wandb
 from imgalaxy.cfg import PKG_PATH
 from imgalaxy.constants import IMAGE_SIZE, NUM_EPOCHS, THRESHOLD
+from imgalaxy.helpers import evaluate_model
 from imgalaxy.unet import UNet
 
 
@@ -79,7 +80,7 @@ def train(
 ):
     with wandb.init(
         project="galaxy-segmentation-project",
-        name=f"jose_{mask}",
+        name=f"prueba_jose_{mask}",
         config={
             'loss': loss,
             'dropout': dropout_rate,
@@ -109,11 +110,13 @@ def train(
             min_vote=min_vote,
         )
         history, test_data = unet.train_pipeline()
-        return history, test_data
+        evaluate_model(test_data, unet.unet_model, num=3)
+        #return history, test_data
 
 
 if __name__ == '__main__':
     #sweep_configs = yaml.safe_load((PKG_PATH / 'sweep.yaml').read_text())
     #sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
     #wandb.agent(sweep_id, function=train)
-    wandb.agent("ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37)
+    #wandb.agent("ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37)
+    train()
