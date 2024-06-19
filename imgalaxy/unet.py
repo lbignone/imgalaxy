@@ -17,13 +17,13 @@ class UNet:
         learning_rate: float = 0.0011,
         batch_size: int = 32,
         batch_normalization: bool = False,
+        kernel_regularization: str = None,
+        bias_regularization: str = None,
+        activity_regularization: str = None,
         image_size: int = 128,
         n_filters: int = 128,
         mask: str = MASK,
         min_vote: int = 3,
-        kernel_regularizer: str = None,
-        bias_regularizer: str = None,
-        activity_regularizer: str = None,
     ):
         self.loss = loss
         self.dropout_rate = dropout_rate
@@ -36,9 +36,9 @@ class UNet:
         self.n_filters = n_filters
         self.mask = mask
         self.unet_model = self.build_unet_model()
-        self.kernel_regularizer = (kernel_regularizer,)
-        self.bias_regularizer = (bias_regularizer,)
-        self.activity_regularizer = (activity_regularizer,)
+        self.kernel_regularization = kernel_regularization
+        self.bias_regularization = bias_regularization
+        self.activity_regularization = activity_regularization
 
         if self.mask == 'spiral_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 4883, 1088, 551

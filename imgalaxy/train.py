@@ -61,6 +61,24 @@ from imgalaxy.unet import UNet
     help="Batch normalization in each double convolution.",
 )
 @click.option(
+    "--kernel-regularization",
+    default=False,
+    show_default=True,
+    help="Use kernel regularization in convolution layers.",
+)
+@click.option(
+    "--bias-regularization",
+    default=False,
+    show_default=True,
+    help="Use bias regularization in convolution layers.",
+)
+@click.option(
+    "--activity-regularization",
+    default=False,
+    show_default=True,
+    help="Use regularization in the activation layer.",
+)
+@click.option(
     "--loss",
     default="sparse_categorical_crossentropy",
     show_default=True,
@@ -73,6 +91,9 @@ def train(
     learning_rate,
     batch_size,
     batch_normalization,
+    kernel_regularization,
+    bias_regularization,
+    activity_regularization,
     image_size,
     n_filters,
     mask,
@@ -88,6 +109,9 @@ def train(
             'learning_rate': learning_rate,
             'batch_size': batch_size,
             'batch_normalization': batch_normalization,
+            'kernel_regularization': kernel_regularization,
+            'bias_regularization': bias_regularization,
+            'activity_regularization': activity_regularization,
             'size': image_size,
             'n_filters': n_filters,
             'mask': mask,
@@ -103,6 +127,9 @@ def train(
             learning_rate=learning_rate,
             batch_size=batch_size,
             batch_normalization=batch_normalization,
+            kernel_regularization=kernel_regularization,
+            bias_regularization=bias_regularization,
+            activity_regularization=activity_regularization,
             image_size=image_size,
             n_filters=n_filters,
             mask=mask,
