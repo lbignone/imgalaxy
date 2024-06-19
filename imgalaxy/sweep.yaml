@@ -26,3 +26,7 @@ parameters:
     values: [3]
   kernel_regularizer:
     values: [None, l1, l2, l1_l2]
+  bias_regularizer:
+    values: [None, l1, l2, l1_l2]
+  activity_regularizer:
+    values: [None, l1, l2, l1_l2]
