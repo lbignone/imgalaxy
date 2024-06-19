@@ -6,6 +6,8 @@ metric:
   name: val_jaccard
   goal: maximize
 parameters:
+  loss:
+    values: [sparse_categorical_crossentropy, dice]
   dropout:
     distribution: uniform
     max: 0.4

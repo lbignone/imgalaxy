@@ -77,7 +77,7 @@ def train(
     mask,
     min_vote,
 ):
-    wandb.init(
+    with wandb.init(
         project="galaxy-segmentation-project",
         name=f"jose_{mask}",
         config={
@@ -94,26 +94,26 @@ def train(
             'threshold': THRESHOLD,
             'group': f"jose_{mask}",
         },
-    )
+    ):
 
-    unet = UNet(
-        loss=loss,
-        dropout_rate=dropout_rate,
-        num_epochs=num_epochs,
-        learning_rate=learning_rate,
-        batch_size=batch_size,
-        batch_normalization=batch_normalization,
-        image_size=image_size,
-        n_filters=n_filters,
-        mask=mask,
-        min_vote=min_vote,
-    )
-    history, test_data = unet.train_pipeline()
-    return history, test_data
+        unet = UNet(
+            loss=loss,
+            dropout_rate=dropout_rate,
+            num_epochs=num_epochs,
+            learning_rate=learning_rate,
+            batch_size=batch_size,
+            batch_normalization=batch_normalization,
+            image_size=image_size,
+            n_filters=n_filters,
+            mask=mask,
+            min_vote=min_vote,
+        )
+        history, test_data = unet.train_pipeline()
+        return history, test_data
 
 
 if __name__ == '__main__':
     #sweep_configs = yaml.safe_load((PKG_PATH / 'sweep.yaml').read_text())
     #sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
     #wandb.agent(sweep_id, function=train)
-    wandb.agent("ganegroup/galaxy-segmentation-project/5aljuyxn", function=train)
+    wandb.agent("ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37)
