@@ -47,19 +47,17 @@ class UNet:
         elif self.mask == 'bar_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 3783, 832, 421
 
+    def binary_mask(self, mask, threshold: int = THRESHOLD):
+        return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
+
     def augment(self, image, mask):
         mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
         rotate = np.random.uniform(low=0.0, high=1.0) > 0.5
         crop = np.random.uniform(low=0.0, high=1.0) > 0.5
         if rotate:
             factor = np.random.uniform(low=-1.0, high=1.0)
-            # factor = tf.random.uniform((), minval=-1, maxval=1, seed=RANDOM_SEED).numpy()
-            image = tf.keras.layers.RandomRotation(factor, interpolation='bilinear')(
-                image
-            )
-            mask = tf.keras.layers.RandomRotation(factor, interpolation='bilinear')(
-                mask
-            )
+            image = tf.keras.layers.RandomRotation(factor)(image)
+            mask = tf.keras.layers.RandomRotation(factor)(mask)
         if mirror:
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
@@ -69,9 +67,6 @@ class UNet:
             mask = mask[0:420, 0:420, :]
 
         return image, mask
-
-    def binary_mask(self, mask, threshold: int = THRESHOLD):
-        return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
 
     def load_image_train(self, datapoint):
         image = datapoint['image']
