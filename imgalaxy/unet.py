@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from keras import layers
@@ -45,37 +47,48 @@ class UNet:
         elif self.mask == 'bar_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 3783, 832, 421
 
-    def augment(self, input_image, input_mask):
-        if tf.random.uniform(()) > 0.5:
-            input_image = tf.image.flip_left_right(input_image)
-            input_mask = tf.image.flip_left_right(input_mask)
-        if tf.random.uniform(()) > 0.5:
-            input_image = tf.image.flip_up_down(input_image)
-            input_mask = tf.image.flip_up_down(input_mask)
+    def augment(self, image, mask):
+        mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
+        rotate = np.random.uniform(low=0.0, high=1.0) > 0.5
+        crop = np.random.uniform(low=0.0, high=1.0) > 0.5
+        if rotate:
+            factor = np.random.uniform(low=-1.0, high=1.0)
+            # factor = tf.random.uniform((), minval=-1, maxval=1, seed=RANDOM_SEED).numpy()
+            image = tf.keras.layers.RandomRotation(factor, interpolation='bilinear')(
+                image
+            )
+            mask = tf.keras.layers.RandomRotation(factor, interpolation='bilinear')(
+                mask
+            )
+        if mirror:
+            image = tf.image.flip_left_right(image)
+            mask = tf.image.flip_left_right(mask)
 
-        return input_image, input_mask
+        if crop:
+            image = image[0:420, 0:420, :]
+            mask = mask[0:420, 0:420, :]
 
-    def binary_mask(self, input_mask, threshold: int = THRESHOLD):
-        input_mask = tf.where(
-            input_mask < threshold, tf.zeros_like(input_mask), tf.ones_like(input_mask)
-        )
+        return image, mask
 
-        return input_mask
+    def binary_mask(self, mask, threshold: int = THRESHOLD):
+        return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
 
     def load_image_train(self, datapoint):
-        input_image = datapoint['image']
-        input_mask = datapoint[self.mask]
-        input_image = tf.image.resize(
-            input_image, (self.image_size, self.image_size), method="nearest"
-        )
-        input_mask = tf.image.resize(
-            input_mask, (self.image_size, self.image_size), method="nearest"
-        )
-        input_image, input_mask = self.augment(input_image, input_mask)
-        input_image = tf.cast(input_image, tf.float32) / 255.0
-        input_mask = self.binary_mask(input_mask, THRESHOLD)
+        image = datapoint['image']
+        mask = datapoint[self.mask]
+        image, mask = self.augment(image, mask)
 
-        return input_image, input_mask
+        image = tf.image.resize(
+            image, (self.image_size, self.image_size), method="bilinear"
+        )
+        mask = tf.image.resize(
+            mask, (self.image_size, self.image_size), method="bilinear"
+        )
+
+        image = tf.cast(image, tf.float32) / 255.0
+        mask = self.binary_mask(mask, THRESHOLD)
+
+        return image, mask
 
     def load_image_test(self, datapoint):
         input_image = datapoint['image']
@@ -159,9 +172,7 @@ class UNet:
 
         outputs = layers.Conv2D(2, 1, padding="same", activation="softmax")(u9)
 
-        model = tf.keras.Model(  # pylint: disable=no-member
-            inputs, outputs, name="U-Net"
-        )
+        model = tf.keras.Model(inputs, outputs, name="U-Net")
 
         return model
 
