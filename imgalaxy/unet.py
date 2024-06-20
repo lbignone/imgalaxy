@@ -35,10 +35,10 @@ class UNet:
         self.min_vote = min_vote
         self.n_filters = n_filters
         self.mask = mask
-        self.unet_model = self.build_unet_model()
         self.kernel_regularization = kernel_regularization
         self.bias_regularization = bias_regularization
         self.activity_regularization = activity_regularization
+        self.unet_model = self.build_unet_model()
 
         if self.mask == 'spiral_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 4883, 1088, 551
@@ -111,6 +111,9 @@ class UNet:
             padding="same",
             activation="relu",
             kernel_initializer="he_normal",
+            kernel_regularizer=self.kernel_regularization,
+            bias_regularizer=self.bias_regularization,
+            activity_regularizer=self.activity_regularization,
         )(x)
         if self.batch_normalization:
             x = layers.BatchNormalization()(x)
@@ -212,7 +215,9 @@ class UNet:
             validation_data=validation_batches,
             callbacks=[
                 WandbMetricsLogger(),
-                tf.keras.callbacks.ModelCheckpoint(MODELS_DIR / f"{self.mask}.keras"),
+                tf.keras.callbacks.ModelCheckpoint(  # pylint: disable=no-member
+                    MODELS_DIR / f"{self.mask}.keras"
+                ),
             ],
         )
 
