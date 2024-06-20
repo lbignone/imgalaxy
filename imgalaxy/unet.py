@@ -53,16 +53,14 @@ class UNet:
     def augment(self, image, mask):
         rotate = np.random.uniform(low=0.0, high=1.0) > 0.5
         if rotate:
-            print("Vamoa rotarno")
             factor = np.random.uniform(low=-1.0, high=1.0)
             image = tf.keras.layers.RandomRotation(factor)(image)
             mask = tf.keras.layers.RandomRotation(factor)(mask)
-            image = image[0:420, 0:420, :]  # crop top right corner
-            mask = mask[0:420, 0:420, :]  # crop top right corner
+            image = image[0:419, 0:419, :]  # crop top right corner
+            mask = mask[0:419, 0:419, :]  # crop top right corner
 
         mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
         if mirror:
-            print("Vamoa voltearno")
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
 
