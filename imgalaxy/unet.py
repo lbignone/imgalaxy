@@ -51,20 +51,20 @@ class UNet:
         return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
 
     def augment(self, image, mask):
-        mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
         rotate = np.random.uniform(low=0.0, high=1.0) > 0.5
-        crop = np.random.uniform(low=0.0, high=1.0) > 0.5
         if rotate:
+            print("Vamoa rotarno")
             factor = np.random.uniform(low=-1.0, high=1.0)
             image = tf.keras.layers.RandomRotation(factor)(image)
             mask = tf.keras.layers.RandomRotation(factor)(mask)
+            image = image[0:420, 0:420, :]  # crop top right corner
+            mask = mask[0:420, 0:420, :]  # crop top right corner
+
+        mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
         if mirror:
+            print("Vamoa voltearno")
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
-
-        if crop:
-            image = image[0:420, 0:420, :]
-            mask = mask[0:420, 0:420, :]
 
         return image, mask
 
@@ -187,7 +187,6 @@ class UNet:
         test_dataset = ds_test.map(
             self.load_image_test, num_parallel_calls=tf.data.AUTOTUNE
         )
-
         train_batches = (
             train_dataset.cache().shuffle(BUFFER_SIZE).batch(self.batch_size).repeat()
         )
