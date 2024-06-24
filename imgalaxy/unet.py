@@ -50,17 +50,42 @@ class UNet:
     def binary_mask(self, mask, threshold: int = THRESHOLD):
         return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
 
+    def _augment(self, image, rotation_factor, seed=11):
+        # if tf.random.uniform(()) > 0.5:
+        image = tf.keras.layers.RandomFlip(mode="horizontal and vertical", seed=seed)(
+            image
+        )
+        # if tf.random.uniform(()) > 0.5:
+        image = tf.keras.layers.RandomRotation(rotation_factor, seed=seed)(image)
+
+        image = tf.keras.layers.RandomZoom((-0.23, 0.23), seed=seed)(image)
+        return image
+
+    def load_image(self, datapoint, train=False):
+        image = datapoint['image']
+        mask = datapoint[self.mask]
+        if train:
+            # rotation_factor = tf.random.uniform((), minval=-1, maxval=1)
+            image = self._augment(image, 0.79)
+            mask = self._augment(mask, 0.79)
+
+        image = tf.image.resize(image, (128, 128), method="bilinear")
+        mask = tf.image.resize(mask, (128, 128), method="bilinear")
+
+        image = tf.cast(image, tf.float32) / 255.0
+        mask = self.binary_mask(mask, THRESHOLD)
+
+        return image, mask
+
     def augment(self, image, mask):
-        rotate = np.random.uniform(low=0.0, high=1.0) > 0.5
-        if rotate:
+        if tf.random.uniform(()) > 0.5:
             factor = np.random.uniform(low=-1.0, high=1.0)
             image = tf.keras.layers.RandomRotation(factor)(image)
             mask = tf.keras.layers.RandomRotation(factor)(mask)
             image = image[0:419, 0:419, :]  # crop top right corner
             mask = mask[0:419, 0:419, :]  # crop top right corner
 
-        mirror = np.random.uniform(low=0.0, high=1.0) > 0.5
-        if mirror:
+        if tf.random.uniform(()) > 0.5:
             image = tf.image.flip_left_right(image)
             mask = tf.image.flip_left_right(mask)
 
