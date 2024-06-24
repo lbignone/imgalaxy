@@ -84,3 +84,17 @@ def longest_contour_mask(
     ax[1, 1].imshow(mask)
 
     fig.show()
+
+
+if __name__ == '__main__':
+    contours_segment(0, level_threshold=0.57, use_rescaled=False)
+    contours_segment(2, level_threshold=0.37, use_rescaled=False)
+    contours_segment(3, level_threshold=0.53, use_rescaled=False)
+    contours_segment(5, use_rescaled=False)
+    contours_segment(7)
+
+    longest_contour_mask(2, level=0.37, use_rescaled=False, use_second=True)
+    longest_contour_mask(2, level=0.37, use_rescaled=False, use_second=True)
+    longest_contour_mask(0, level=0.51, use_rescaled=True)
+    longest_contour_mask(5, level=0.51, use_second=True)
+    longest_contour_mask(7, level=0.51, use_rescaled=True, use_second=True)
