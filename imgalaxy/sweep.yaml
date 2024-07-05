@@ -20,13 +20,9 @@ parameters:
     values: [32, 64]
   batch_normalization: 
     values: [False, True]
+  kernel_regularizer:
+    values: [None, l1, l2, l1_l2]
   n_filters:
     values: [64, 128]
   min_vote:
     values: [3]
-  kernel_regularizer:
-    values: [None, l1, l2, l1_l2]
-  bias_regularizer:
-    values: [None, l1, l2, l1_l2]
-  activity_regularizer:
-    values: [None, l1, l2, l1_l2]

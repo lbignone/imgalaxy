@@ -78,16 +78,19 @@ class UNet:
         return image, mask
 
     def augment(self, image, mask):
-        if tf.random.uniform(()) > 0.5:
-            factor = np.random.uniform(low=-1.0, high=1.0)
-            image = tf.keras.layers.RandomRotation(factor)(image)
-            mask = tf.keras.layers.RandomRotation(factor)(mask)
-            image = image[0:419, 0:419, :]  # crop top right corner
-            mask = mask[0:419, 0:419, :]  # crop top right corner
+        #if tf.random.uniform(()) > 0.5:
+            #factor = np.random.uniform(low=-1.0, high=1.0)
+            #image = tf.keras.layers.RandomRotation(factor)(image)
+            #mask = tf.keras.layers.RandomRotation(factor)(mask)
+            #image = image[0:419, 0:419, :]  # crop top right corner
+            #mask = mask[0:419, 0:419, :]  # crop top right corner
 
         if tf.random.uniform(()) > 0.5:
-            image = tf.image.flip_left_right(image)
-            mask = tf.image.flip_left_right(mask)
+            input_image = tf.image.flip_left_right(image)
+            input_mask = tf.image.flip_left_right(mask)
+        if tf.random.uniform(()) > 0.5:
+            input_image = tf.image.flip_up_down(image)
+            input_mask = tf.image.flip_up_down(mask)
 
         return image, mask
 
@@ -216,9 +219,9 @@ class UNet:
         train_batches = train_batches.prefetch(
             buffer_size=tf.data.experimental.AUTOTUNE
         )
-        validation_batches = test_dataset.take(self.VAL_SIZE).batch(self.batch_size)
+        validation_batches = test_dataset.take(self.VAL_SIZE).batch(self.batch_size) 
         test_batches = (
-            test_dataset.skip(self.VAL_SIZE).take(self.TEST_SIZE).batch(self.batch_size)
+            test_dataset.skip(self.VAL_SIZE).take(self.TEST_SIZE).batch(self.batch_size) 
         )
 
         self.unet_model.compile(

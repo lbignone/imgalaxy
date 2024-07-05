@@ -62,21 +62,9 @@ from imgalaxy.unet import UNet
 )
 @click.option(
     "--kernel-regularization",
-    default=False,
+    default=None,
     show_default=True,
     help="Use kernel regularization in convolution layers.",
-)
-@click.option(
-    "--bias-regularization",
-    default=False,
-    show_default=True,
-    help="Use bias regularization in convolution layers.",
-)
-@click.option(
-    "--activity-regularization",
-    default=False,
-    show_default=True,
-    help="Use regularization in the activation layer.",
 )
 @click.option(
     "--loss",
@@ -92,8 +80,6 @@ def train(
     batch_size,
     batch_normalization,
     kernel_regularization,
-    bias_regularization,
-    activity_regularization,
     image_size,
     n_filters,
     mask,
@@ -110,8 +96,6 @@ def train(
             'batch_size': batch_size,
             'batch_normalization': batch_normalization,
             'kernel_regularization': kernel_regularization,
-            'bias_regularization': bias_regularization,
-            'activity_regularization': activity_regularization,
             'size': image_size,
             'n_filters': n_filters,
             'mask': mask,
@@ -128,8 +112,6 @@ def train(
             batch_size=batch_size,
             batch_normalization=batch_normalization,
             kernel_regularization=kernel_regularization,
-            bias_regularization=bias_regularization,
-            activity_regularization=activity_regularization,
             image_size=image_size,
             n_filters=n_filters,
             mask=mask,
@@ -144,5 +126,6 @@ if __name__ == '__main__':
     sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
     wandb.agent(sweep_id, function=train)
     wandb.agent(
-        "ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=37
+        "ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=77
     )
+    #train()

@@ -18,7 +18,7 @@ def create_mask(pred_mask):
     return pred_mask
 
 
-def evaluate_model(dataset, model, num=1):
+def evaluate_model(dataset, model, num=19):
     """Evaluate model after a run is completed."""
     # TODO: try tf.keras.Model.evaluate()
     if dataset:
