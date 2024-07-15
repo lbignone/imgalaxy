@@ -14,7 +14,7 @@ from imgalaxy.unet import UNet
 )
 @click.option(
     "--mask",
-    default='bar_mask',
+    default='spiral_mask',
     show_default=True,
     help="Target mask to use for training.",
 )
@@ -126,6 +126,6 @@ if __name__ == '__main__':
     sweep_id = wandb.sweep(sweep=sweep_configs, project="galaxy-segmentation-project")
     wandb.agent(sweep_id, function=train)
     wandb.agent(
-        "ganegroup/galaxy-segmentation-project/o6l0jt6i", function=train, count=77
+        f"ganegroup/galaxy-segmentation-project/{sweep_id}", function=train, count=47
     )
     #train()

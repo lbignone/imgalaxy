@@ -7,7 +7,7 @@ from wandb.keras import WandbMetricsLogger
 
 from imgalaxy.cfg import MODELS_DIR
 from imgalaxy.constants import BUFFER_SIZE, MASK, NUM_EPOCHS, THRESHOLD
-from imgalaxy.helpers import dice, jaccard
+from imgalaxy.helpers import check_augmented_images, dice, jaccard
 
 
 class UNet:
@@ -65,9 +65,9 @@ class UNet:
         image = datapoint['image']
         mask = datapoint[self.mask]
         if train:
-            # rotation_factor = tf.random.uniform((), minval=-1, maxval=1)
-            image = self._augment(image, 0.79)
-            mask = self._augment(mask, 0.79)
+            rotation_factor = lambda: tf.random.uniform((), minval=-1, maxval=1)
+            image = self._augment(image, rotation_factor())
+            mask = self._augment(mask, rotation_factor())
 
         image = tf.image.resize(image, (128, 128), method="bilinear")
         mask = tf.image.resize(mask, (128, 128), method="bilinear")
@@ -77,7 +77,7 @@ class UNet:
 
         return image, mask
 
-    def augment(self, image, mask):
+    def augment(self, input_image, input_mask):
         #if tf.random.uniform(()) > 0.5:
             #factor = np.random.uniform(low=-1.0, high=1.0)
             #image = tf.keras.layers.RandomRotation(factor)(image)
@@ -86,13 +86,13 @@ class UNet:
             #mask = mask[0:419, 0:419, :]  # crop top right corner
 
         if tf.random.uniform(()) > 0.5:
-            input_image = tf.image.flip_left_right(image)
-            input_mask = tf.image.flip_left_right(mask)
+            input_image = tf.image.flip_left_right(input_image)
+            input_mask = tf.image.flip_left_right(input_mask)
         if tf.random.uniform(()) > 0.5:
-            input_image = tf.image.flip_up_down(image)
-            input_mask = tf.image.flip_up_down(mask)
+            input_image = tf.image.flip_up_down(input_image)
+            input_mask = tf.image.flip_up_down(input_mask)
 
-        return image, mask
+        return input_image, input_mask
 
     def load_image_train(self, datapoint):
         image = datapoint['image']
@@ -211,7 +211,7 @@ class UNet:
             self.load_image_train, num_parallel_calls=tf.data.AUTOTUNE
         )
         test_dataset = ds_test.map(
-            self.load_image_test, num_parallel_calls=tf.data.AUTOTUNE
+            self.load_image_train, num_parallel_calls=tf.data.AUTOTUNE
         )
         train_batches = (
             train_dataset.cache().shuffle(BUFFER_SIZE).batch(self.batch_size).repeat()
@@ -223,7 +223,7 @@ class UNet:
         test_batches = (
             test_dataset.skip(self.VAL_SIZE).take(self.TEST_SIZE).batch(self.batch_size) 
         )
-
+        # check_augmented_images(train_batches)
         self.unet_model.compile(
             optimizer=tf.keras.optimizers.Adam(  # pylint: disable=no-member
                 learning_rate=self.learning_rate

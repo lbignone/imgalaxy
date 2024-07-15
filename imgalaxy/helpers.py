@@ -41,6 +41,15 @@ def evaluate_model(dataset, model, num=19):
         return conf_matrix, jacc_score
 
 
+def check_augmented_images(dataset, num=29):
+    """Log training images to check that augmentation worked correctly."""
+    if dataset:
+        for image, mask in dataset:
+            for ind in range(num):
+                wandb.log(
+                    {"train_example": [wandb.Image(image[ind]), wandb.Image(mask[ind])]}
+                )
+
 def jaccard(y_true, y_pred):
     """Jaccard index to compute after each epoch."""
     tp = keras.metrics.TruePositives()
