@@ -41,7 +41,7 @@ def evaluate_model(dataset, model, num=19):
         return conf_matrix, jacc_score
 
 
-def check_augmented_images(dataset, num=29):
+def check_augmented_images(dataset, num=11):
     """Log training images to check that augmentation worked correctly."""
     if dataset:
         for image, mask in dataset:
