@@ -1,13 +1,86 @@
+from typing import Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage as ski
+from numpy.typing import NDArray
 
 from imgalaxy.cfg import LENSING_POC_GALAXIES
 
+BANDS = {0: 'G', 1: 'R', 2: 'I', 3: 'Z', 4: 'Y'}
 CHANNEL = 'rgb'
 GALAXIES = {n: LENSING_POC_GALAXIES.format(n, CHANNEL) for n in range(10)}
+THRESHOLD_TYPES = ['yen', 'triangle', 'li', 'otsu', 'min', 'iso', 'sigma']
 
 
+def threshold_split(
+    images: NDArray,
+    threshold_type: str = 'otsu',
+    small_objs_size: float = 43.0,
+    sigma_threshold: float = 2.71,
+    plot: bool = True,
+) -> Tuple[NDArray, NDArray]:
+    if threshold_type not in THRESHOLD_TYPES:
+        raise ValueError(f"Select a threshold type. You used: {threshold_type}")
+    if threshold_type == 'otsu':
+        thresholds = [ski.filters.threshold_otsu(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'li':
+        thresholds = [ski.filters.threshold_li(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'yen':
+        thresholds = [ski.filters.threshold_yen(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'min':
+        thresholds = [ski.filters.threshold_minimum(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'triangle':
+        thresholds = [ski.filters.threshold_triangle(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'iso':
+        thresholds = [ski.filters.threshold_isodata(images[:, :, i]) for i in range(5)]
+    if threshold_type == 'sigma':
+        thresholds = np.mean(images, axis=(0, 1)) + sigma_threshold * np.std(
+            images, axis=(0, 1)
+        )
+
+    masks = images > thresholds  # pylint: disable=possibly-used-before-assignment
+    masks = masks.astype(int)
+
+    objects = ski.measure.label(masks)
+
+    large_objects = ski.morphology.remove_small_objects(
+        objects, min_size=small_objs_size
+    )
+    small_objects = objects ^ large_objects
+
+    if plot:
+        _, axes = plt.subplots(3, 5, figsize=(15, 10))
+
+        for i in range(5):
+            axes[0, i].set_ylabel("Original")
+            axes[0, i].imshow(images[:, :, i])
+            axes[0, i].set_title(f'Band {BANDS[i]}')
+            axes[0, i].axis('off')
+
+            axes[1, i].imshow(small_objects[:, :, i])
+            axes[1, i].set_title(f'Band {BANDS[i]}')
+            axes[1, i].axis('off')
+
+            axes[2, i].imshow(large_objects[:, :, i])
+            axes[2, i].set_title(f'Band {BANDS[i]}')
+            axes[2, i].axis('off')
+
+        plt.tight_layout()
+        plt.show()
+
+    return large_objects, small_objects
+
+
+def create_circular_mask(radius=11):
+    center = (32, 32)
+    Y, X = np.ogrid[:64, :64]
+    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+    mask = dist_from_center <= radius
+    return mask
+
+
+# OLD PROOF OF CONCEPT, ONLY 10 IMAGES, DIFFERENT DIMENSIONS
 def contours_segment(
     galaxy_ix: int,
     level_threshold=0.41,
