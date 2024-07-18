@@ -15,7 +15,7 @@ st.set_page_config(page_title="Lensing Masks", layout="wide")
 
 def update_mask(
     galaxy_ix: int, mask_name: str, masks: NDArray, channels: list, save: bool = False
-) -> np.NDArray:
+) -> NDArray:
     filepath: Path = LENSING_MASKS_DIR / f"{galaxy_ix}_{mask_name}_mask.npy"
     current_mask = np.load(filepath)
     mask = current_mask.copy()
