@@ -21,7 +21,7 @@ def update_mask(
     mask = current_mask.copy()
     for c in range(5):
         if channels[c]:
-            mask = current_mask + masks[:, :, c]
+            mask = mask + masks[:, :, c]
 
     if save:
         np.save(filepath, mask)
@@ -81,6 +81,7 @@ def main():
             mask_name = st.radio(
                 "Select mask type", options=["lens", "background"], horizontal=True
             )
+        mask_filepath = LENSING_MASKS_DIR / f"{galaxy_ix}_{mask_name}_mask.npy"
 
         st.write("Select channels to add:")
         channels = st.columns(5)
@@ -97,25 +98,23 @@ def main():
 
         to_add_channels = [ch_0, ch_1, ch_2, ch_3, ch_4]
 
-        new_mask = update_mask(
-            galaxy_ix, mask_name, [layer_0, layer_1][layer], to_add_channels
-        )
-
-        galaxy_chart, new_mask_chart, current_mask_chart = st.columns(3)
+        galaxy_chart, current_mask_chart, new_mask_chart = st.columns(3)
         with galaxy_chart:
             st.plotly_chart(
                 px.imshow(background_images.sum(axis=2), title="Galaxy image")
             )
 
         with current_mask_chart:
-            mask_filepath = LENSING_MASKS_DIR / f"{galaxy_ix}_{mask_name}_mask.npy"
             mask = np.load(mask_filepath)
-            st.plotly_chart(
-                px.imshow(mask, title=f"{mask_name} mask at {mask_filepath}")
-            )
+            st.plotly_chart(px.imshow(mask, title=f"{mask_filepath.name}"))
 
         with new_mask_chart:
+            new_mask = update_mask(
+                galaxy_ix, mask_name, [layer_0, layer_1][layer], to_add_channels
+            )
             st.plotly_chart(px.imshow(new_mask, title=f"Candidate {mask_name} mask."))
+            if st.button("Save this mask."):
+                np.save(mask_filepath, new_mask)
 
 
 if __name__ == "__main__":
