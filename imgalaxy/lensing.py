@@ -21,7 +21,7 @@ def threshold_split(
     plot: bool = True,
 ) -> Tuple[NDArray, NDArray]:
     if threshold_type not in THRESHOLD_TYPES:
-        raise ValueError(f"Select a threshold type. You used: {threshold_type}")
+        raise ValueError(f"Select a valid threshold type. You used: {threshold_type}")
     if threshold_type == 'otsu':
         thresholds = [ski.filters.threshold_otsu(images[:, :, i]) for i in range(5)]
     if threshold_type == 'li':
