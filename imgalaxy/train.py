@@ -129,4 +129,4 @@ if __name__ == '__main__':
     wandb.agent(
         f"ganegroup/galaxy-segmentation-project/{sweep_id}", function=train, count=47
     )
-    train()
+    #train()
