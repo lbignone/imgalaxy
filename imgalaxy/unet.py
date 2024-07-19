@@ -41,9 +41,12 @@ class UNet:
         self.activity_regularization = activity_regularization
         self.unet_model = self.build_unet_model()
         self.augmentation = tf.keras.Sequential([
-            tf.keras.layers.RandomFlip(mode="horizontal and vertical"),
-            tf.keras.layers.RandomRotation((0.23)),
-            tf.keras.layers.RandomZoom((-0.23, 0.23)),
+            tf.keras.layers.RandomFlip(mode="horizontal and vertical", seed=101),
+            tf.keras.layers.RandomRotation(factor=(0, 1), seed=101),
+            #tf.keras.layers.RandomZoom(
+            #    height_factor=-0.23, width_factor=-0.23, seed=101
+            #),
+            tf.keras.layers.RandomCrop(420, 420, seed=101)
         ])
         self.resize = tf.keras.Sequential([
             layers.Resizing(self.image_size, self.image_size),
@@ -54,21 +57,25 @@ class UNet:
         elif self.mask == 'bar_mask':
             self.TRAIN_LENGTH, self.VAL_SIZE, self.TEST_SIZE = 3783, 832, 421
 
+    def augment(self, image, mask):
+        images_mask = tf.keras.layers.Concatenate(axis=2)([image, mask])
+        images_mask = self.augmentation(images_mask)  
+        
+        image = images_mask[:, :, 0:3]
+        mask = images_mask[:, :, 3:]
+        
+        mask = tf.cast(mask, 'uint8')
+        
+        return image, mask
+
     def binary_mask(self, mask, threshold: int = THRESHOLD):
         return tf.where(mask < threshold, tf.zeros_like(mask), tf.ones_like(mask))
-
-    def augment(self, input_image, input_mask):
-        input_image = self.augmentation(input_image)
-        input_mask = self.augmentation(input_mask)
-
-        return input_image, input_mask
     
     def load_image(self, datapoint, training=False):
         image = datapoint['image']
         mask = datapoint[self.mask]
         if training:
-            image = self.augmentation(image)
-            mask = self.augmentation(mask)
+            image, mask = self.augment(image, mask)
 
         image = self.resize(image)
         mask = self.resize(mask)
@@ -153,7 +160,7 @@ class UNet:
 
     def train_pipeline(self):
         ds_train, ds_val, ds_test = tfds.load(
-            'galaxy_zoo3d', split=['train[:75%]', 'train[75%:85%]', 'train[85%:]']
+            'galaxy_zoo3d', split=['train[:75%]', 'train[75%:90%]', 'train[90%:]']
         )
         ds_train = ds_train.filter(
             lambda x: tf.reduce_max(x[self.mask]) >= self.min_vote

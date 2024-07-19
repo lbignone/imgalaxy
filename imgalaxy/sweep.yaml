@@ -7,7 +7,11 @@ metric:
   goal: maximize
 parameters:
   loss:
-    values: [sparse_categorical_crossentropy, dice, binary_focal_crossentropy]
+    values: [
+      sparse_categorical_crossentropy,
+      # dice, 
+      # binary_focal_crossentropy
+    ]
   dropout:
     distribution: uniform
     max: 0.4
