@@ -1,6 +1,8 @@
 #FROM tensorflow/tensorflow:2.15.0-gpu
 FROM nvcr.io/nvidia/tensorflow:23.09-tf2-py3
 
+COPY apt.conf /etc/apt/apt.conf.d/apt.conf
+
 RUN apt-get update \
     && apt-get install -y neovim \
     && apt-get install -y --no-install-recommends gcc git \
