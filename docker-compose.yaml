@@ -13,6 +13,7 @@ services:
     # command: 'poetry run python imgalaxy/train.py --mask spiral_mask'
     # command: 'tail -f /dev/null'
     # command: 'poetry run wandb sweep --resume ganegroup/galaxy-segmentation-project/5ozjufhs'
+    command: 'poetry run python imgalaxy/train.py'
     volumes:
       - ${GALAXY_ZOO_DIR}:/root/tensorflow_datasets/galaxy_zoo3d
       - type: bind
@@ -24,6 +25,7 @@ services:
     ulimits:
       memlock: -1
       stack: 67108864
+    shm_size: '2gb'
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - TF_FORCE_GPU_ALLOW_GROWTH=true
