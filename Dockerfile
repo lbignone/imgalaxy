@@ -20,6 +20,8 @@ COPY poetry.lock /imgalaxy/poetry.lock
 WORKDIR /imgalaxy
 COPY . /imgalaxy/
 RUN poetry config virtualenvs.create false
+# Uncomment to update poetry lock
+# RUN poetry lock --no-update --no-interaction
 RUN poetry install --no-interaction --without dev
 # CMD tail -f  /dev/null
 # ENTRYPOINT ["poetry", "run", "python", "imgalaxy/train.py", "--mask", "spiral_mask"]
