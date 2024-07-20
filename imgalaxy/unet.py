@@ -46,7 +46,7 @@ class UNet:
             #tf.keras.layers.RandomZoom(
             #    height_factor=-0.23, width_factor=-0.23, seed=101
             #),
-            tf.keras.layers.RandomCrop(420, 420, seed=101)
+            # tf.keras.layers.RandomCrop(420, 420, seed=101)
         ])
         self.resize = tf.keras.Sequential([
             layers.Resizing(self.image_size, self.image_size),
@@ -92,9 +92,9 @@ class UNet:
             padding="same",
             activation="relu",
             kernel_initializer="he_normal",
-            kernel_regularizer=self.kernel_regularization,
-            bias_regularizer=self.bias_regularization,
-            activity_regularizer=self.activity_regularization,
+            # kernel_regularizer=self.kernel_regularization,
+            # bias_regularizer=self.bias_regularization,
+            # activity_regularizer=self.activity_regularization,
         )(x)
         if self.batch_normalization:
             x = layers.BatchNormalization()(x)
@@ -105,9 +105,9 @@ class UNet:
             padding="same",
             activation="relu",
             kernel_initializer="he_normal",
-            kernel_regularizer=self.kernel_regularization,
-            bias_regularizer=self.bias_regularization,
-            activity_regularizer=self.activity_regularization,
+            # kernel_regularizer=self.kernel_regularization,
+            # bias_regularizer=self.bias_regularization,
+            # activity_regularizer=self.activity_regularization,
         )(x)
         if self.batch_normalization:
             x = layers.BatchNormalization()(x)
@@ -126,9 +126,9 @@ class UNet:
             3,
             2,
             padding="same",
-            kernel_regularizer=self.kernel_regularization,
-            bias_regularizer=self.bias_regularization,
-            activity_regularizer=self.activity_regularization,
+            # kernel_regularizer=self.kernel_regularization,
+            # bias_regularizer=self.bias_regularization,
+            # activity_regularizer=self.activity_regularization,
         )(x)
         x = layers.concatenate([x, conv_features])
         x = layers.Dropout(self.dropout_rate)(x)
