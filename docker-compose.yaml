@@ -28,7 +28,7 @@ services:
     shm_size: '2gb'
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - TF_FORCE_GPU_ALLOW_GROWTH=true
+      # - TF_FORCE_GPU_ALLOW_GROWTH=true
       - WANDB_API_KEY=${WANDB_API_KEY}
     networks:
       - imgalaxy-network
